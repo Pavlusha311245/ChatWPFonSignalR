@@ -68,6 +68,8 @@ namespace Server
 
             services.AddControllers();
             services.AddRazorPages();
+
+            services.AddSignalR();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

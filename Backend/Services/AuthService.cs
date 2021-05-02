@@ -1,9 +1,11 @@
-﻿using Microsoft.AspNetCore.Identity;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Server.Interfaces;
 using Server.Models;
+using Server.ViewModel;
 using System;
 using System.Collections.Generic;
 using System.IdentityModel.Tokens.Jwt;
@@ -20,16 +22,19 @@ namespace Server.Services
         private readonly RoleManager<IdentityRole> roleManager;
         private readonly IConfiguration configuration;
         private readonly IMailService mailService;
+        private readonly IMapper mapper;
 
         public AuthService(UserManager<User> userManager,
             RoleManager<IdentityRole> roleManager,
             IMailService mailService,
-            IConfiguration configuration)
+            IConfiguration configuration,
+            IMapper mapper)
         {
             this.userManager = userManager;
             this.roleManager = roleManager;
             this.configuration = configuration;
             this.mailService = mailService;
+            this.mapper = mapper;
         }
 
         /// <summary>
@@ -140,11 +145,14 @@ namespace Server.Services
 
             string access_token = new JwtSecurityTokenHandler().WriteToken(token);
 
-            return new UserManagerResponse
+            var userViewModel = mapper.Map<UserViewModel>(user);
+
+            return new UserManagerResponse()
             {
                 Message = access_token,
                 IsSuccess = true,
-                ExpireDate = token.ValidTo
+                ExpireDate = token.ValidTo,
+                Model = userViewModel
             };
         }
 

@@ -1,0 +1,15 @@
+﻿<Window x:Class="Client.AuthWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        xmlns:local="clr-namespace:Client"
+        mc:Ignorable="d"
+        Title="AuthWindow" Height="450" Width="400" Background="White">
+    <Grid>
+        <TextBox x:Name="LoginEmailBox" HorizontalAlignment="Center" Height="20" Margin="0,197,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="300"/>
+        <PasswordBox x:Name="LoginPassBox" HorizontalAlignment="Center" Height="20" Margin="0,239,0,0" VerticalAlignment="Top" Width="300"/>
+        <Button x:Name="LoginBtn" Content="Войти" HorizontalAlignment="Center" Height="25" Margin="0,319,0,0" VerticalAlignment="Top" Width="100" Click="Login"/>
+
+    </Grid>
+</Window>

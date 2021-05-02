@@ -68,6 +68,8 @@ namespace Server
 
             services.AddControllers();
             services.AddRazorPages();
+
+            services.AddAutoMapper(typeof(Startup));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

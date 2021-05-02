@@ -40,7 +40,7 @@ namespace Server.Controllers
         }
 
         [HttpPost("Login")]
-        public async Task<IActionResult> Login([FromForm] LoginModel model)
+        public async Task<IActionResult> Login([FromBody] LoginModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest("Some properties are not valid");
@@ -57,7 +57,7 @@ namespace Server.Controllers
         }
 
         [HttpPost("Forgot")]
-        public async Task<IActionResult> ForgotPassword([FromForm] ForgotPasswordModel model)
+        public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest();
@@ -74,7 +74,7 @@ namespace Server.Controllers
         }
 
         [HttpPost("Reset")]
-        public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordModel model)
+        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest("Some properties are not valid");

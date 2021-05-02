@@ -8,6 +8,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
 using Server.Data;
+using Server.Hubs;
 using Server.Interfaces;
 using Server.Models;
 using Server.Services;
@@ -70,6 +71,8 @@ namespace Server
             services.AddRazorPages();
 
             services.AddSignalR();
+
+            services.AddAutoMapper(typeof(Startup));
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -92,7 +95,8 @@ namespace Server
             {
                 endpoints.MapControllers();
                 endpoints.MapRazorPages();
-            });
+                endpoints.MapHub<ChatHub>("/chat");
+            });            
         }
     }
 }

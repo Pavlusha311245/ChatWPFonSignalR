@@ -13,10 +13,5 @@ namespace Server.Data
                 Database.Migrate();
             }                
         }
-
-        protected override void OnModelCreating(ModelBuilder builder)
-        {
-            
-        }
     }
 }

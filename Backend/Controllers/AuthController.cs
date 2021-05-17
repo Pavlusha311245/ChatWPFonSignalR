@@ -74,7 +74,7 @@ namespace Server.Controllers
         }
 
         [HttpPost("Reset")]
-        public async Task<IActionResult> ResetPassword([FromBody] ResetPasswordModel model)
+        public async Task<IActionResult> ResetPassword([FromForm] ResetPasswordModel model)
         {
             if (!ModelState.IsValid)
                 return BadRequest("Some properties are not valid");

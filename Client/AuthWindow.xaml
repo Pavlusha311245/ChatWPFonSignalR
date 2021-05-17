@@ -5,11 +5,20 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Client"
         mc:Ignorable="d"
-        Title="AuthWindow" Height="450" Width="400" Background="White">
-    <Grid>
-        <TextBox x:Name="LoginEmailBox" HorizontalAlignment="Center" Height="20" Margin="0,197,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="300"/>
-        <PasswordBox x:Name="LoginPassBox" HorizontalAlignment="Center" Height="20" Margin="0,239,0,0" VerticalAlignment="Top" Width="300"/>
-        <Button x:Name="LoginBtn" Content="Войти" HorizontalAlignment="Center" Height="25" Margin="0,319,0,0" VerticalAlignment="Top" Width="100" Click="Login"/>
+        Title="Авторизация" Height="450" Width="350"
+        Style="{DynamicResource CustomWindowStyle}">
+    <Grid Margin="0,0,-2,0">
+        <TextBox x:Name="LoginEmailBox" HorizontalAlignment="Center" Height="30" Margin="0,197,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="300" VerticalContentAlignment="Center" Padding="10,5,0,7"/>
+        <PasswordBox x:Name="LoginPassBox" HorizontalAlignment="Center" Height="30" Margin="0,279,0,0" VerticalAlignment="Top" Width="300" VerticalContentAlignment="Center" Padding="10,5,0,5"/>
+        <Button x:Name="LoginBtn" Content="Войти" HorizontalAlignment="Center" Height="25" Margin="0,344,0,0" VerticalAlignment="Top" Width="100" Click="Login" FontWeight="Bold"/>
+        <TextBlock x:Name="LoginLabel" Height="20" Margin="25,172,25,0" VerticalAlignment="Top" d:LayoutOverrides="Width"><Run Language="ru-ru" Text="Электронная почта"/><LineBreak/><Run Language="ru-ru"/></TextBlock>
+        <TextBlock x:Name="PasswordLabel" Height="20" Margin="25,254,25,0" VerticalAlignment="Top" d:LayoutOverrides="Width"><Run Language="ru-ru" Text="Пароль"/></TextBlock>
+
+        <Image x:Name="Logo" Source="/logo.jpg" Width="100" Height="100" Margin="125,34,125,0" VerticalAlignment="Top" d:LayoutOverrides="Height">
+            <Image.Clip>
+                <EllipseGeometry RadiusX="50" RadiusY="50" Center="50,50"/>
+            </Image.Clip>
+        </Image>
 
     </Grid>
 </Window>

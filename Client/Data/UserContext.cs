@@ -5,7 +5,7 @@ namespace Client.Data
 {
     class UserContext : DbContext
     {
-        public DbSet<Token> Token { get; set; }
+        public DbSet<Token> Tokens { get; set; }
 
         public UserContext()
         {
@@ -14,7 +14,7 @@ namespace Client.Data
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
-            optionsBuilder.UseSqlite("Filename=User.db");
+            optionsBuilder.UseSqlite("Filename=Users.db");
         }
     }
 }

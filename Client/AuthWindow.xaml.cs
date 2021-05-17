@@ -2,6 +2,7 @@
 using Client.Models;
 using System.Net.Http;
 using System.Net.Http.Json;
+using System.Net.Mail;
 using System.Windows;
 
 namespace Client
@@ -20,7 +21,15 @@ namespace Client
 
         private void Login(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(LoginEmailBox.Text.Trim()) || string.IsNullOrWhiteSpace(LoginPassBox.Password.Trim()))
+            MailAddress mail = null;
+
+            if (!MailAddress.TryCreate(LoginEmailBox.Text.Trim(), out mail))
+            {
+                MessageBox.Show("Invalid email");
+                return;
+            }               
+
+            if (string.IsNullOrWhiteSpace(mail.Address) || string.IsNullOrWhiteSpace(LoginPassBox.Password.Trim()))
             {
                 MessageBox.Show("Одно или несколько полей пустые");
                 return;
@@ -37,8 +46,6 @@ namespace Client
 
                 var deserializedResponse = response.Content.ReadFromJsonAsync<UserManagerResponse>().Result;
 
-                MainWindow mainWindow = new();
-
                 if (deserializedResponse.IsSuccess)
                 {
                     using (var db = new UserContext())
@@ -48,12 +55,13 @@ namespace Client
                             Value = deserializedResponse.Message,
                             ExpireDate = (System.DateTime)deserializedResponse.ExpireDate
                         };
-                        db.Token.Add(token);
+                        db.Tokens.Add(token);
                         db.SaveChanges();
                     }
-                    mainWindow.Show();
-                }
 
+                    DialogResult = true;
+                    Close();
+                }
             }
         }
     }

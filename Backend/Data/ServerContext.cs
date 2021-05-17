@@ -9,7 +9,14 @@ namespace Server.Data
         public ServerContext(DbContextOptions<ServerContext> options) : base(options)
         {
             if (!Database.CanConnect())
+            {
                 Database.Migrate();
+            }                
+        }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            
         }
     }
 }

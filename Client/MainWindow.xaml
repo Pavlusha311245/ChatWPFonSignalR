@@ -3,14 +3,19 @@
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:local="clr-namespace:Client"
+        xmlns:local="clr-namespace:Client" d:DataContext="{d:DesignInstance Type=local:ChatViewModel}"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="800">
+        Title="MainWindow" Height="450" Width="800"
+        Style="{DynamicResource CustomWindowStyle}">
     <Grid>
-        <ListView x:Name="listView" Margin="250,59,225,100">
+        <TextBox x:Name="textBox_Copy" HorizontalAlignment="Left" Height="23" Margin="73,389,0,0" Text="{Binding UserName}" TextWrapping="Wrap" VerticalAlignment="Top" Width="130" d:LayoutOverrides="HorizontalAlignment"/>
+        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="30" Margin="73,344,0,0" Text="{Binding Message}" TextWrapping="Wrap" VerticalAlignment="Top" Width="437"/>
+        <Button x:Name="button" IsEnabled="{Binding IsConnected}" Command="{Binding SendMessageCommand}" Content="Send" HorizontalAlignment="Left" Height="35" Margin="525,342,0,0" VerticalAlignment="Top" Width="200" Cursor="Hand"/>
+        <ListView x:Name="listView" Margin="73,54,73,118" ItemsSource="{Binding Messages}">
             <ListView.View>
-                <GridView>
-                    <GridViewColumn/>
+                <GridView AllowsColumnReorder="True">
+                    <GridViewColumn DisplayMemberBinding="{Binding User}" Width="50"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Message}" Width="200"/>
                 </GridView>
             </ListView.View>
         </ListView>

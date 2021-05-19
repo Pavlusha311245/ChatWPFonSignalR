@@ -8,16 +8,18 @@
         Title="MainWindow" Height="450" Width="800"
         Style="{DynamicResource CustomWindowStyle}">
     <Grid>
-        <TextBox x:Name="textBox_Copy" HorizontalAlignment="Left" Height="23" Margin="73,389,0,0" Text="{Binding UserName}" TextWrapping="Wrap" VerticalAlignment="Top" Width="130" d:LayoutOverrides="HorizontalAlignment"/>
-        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="30" Margin="73,344,0,0" Text="{Binding Message}" TextWrapping="Wrap" VerticalAlignment="Top" Width="437"/>
-        <Button x:Name="button" IsEnabled="{Binding IsConnected}" Command="{Binding SendMessageCommand}" Content="Send" HorizontalAlignment="Left" Height="35" Margin="525,342,0,0" VerticalAlignment="Top" Width="200" Cursor="Hand"/>
-        <ListView x:Name="listView" Margin="73,54,73,118" ItemsSource="{Binding Messages}">
+        <TextBox x:Name="textBox" HorizontalAlignment="Left" Height="30" Margin="73,286,0,0" Text="{Binding Message}" TextWrapping="Wrap" VerticalAlignment="Top" Width="437"/>
+
+        <Button x:Name="button" IsEnabled="{Binding IsConnected}" Command="{Binding SendMessageCommand}" Content="Send" HorizontalAlignment="Left" Height="35" Margin="525,284,0,0" VerticalAlignment="Top" Width="200" Cursor="Hand"/>
+        <ListView x:Name="listView" Margin="73,10,73,162" ItemsSource="{Binding Messages}">
             <ListView.View>
                 <GridView AllowsColumnReorder="True">
-                    <GridViewColumn DisplayMemberBinding="{Binding User}" Width="50"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding User}" Width="100"/>
                     <GridViewColumn DisplayMemberBinding="{Binding Message}" Width="200"/>
                 </GridView>
             </ListView.View>
         </ListView>
+        <Button x:Name="button1" Content="Add file" HorizontalAlignment="Left" Height="35" Margin="525,339,0,0" VerticalAlignment="Top" Width="200" Click="ChooseFile"/>
+        <Grid x:Name="Documents" Margin="73,334,278,53"/>
     </Grid>
 </Window>

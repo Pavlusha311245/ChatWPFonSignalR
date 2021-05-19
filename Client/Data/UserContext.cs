@@ -6,10 +6,12 @@ namespace Client.Data
     class UserContext : DbContext
     {
         public DbSet<Token> Tokens { get; set; }
+        public DbSet<User> Users { get; set; }
 
         public UserContext()
         {
-            Database.EnsureCreated();
+            if (!Database.CanConnect())
+                Database.EnsureCreated();
         }
 
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)

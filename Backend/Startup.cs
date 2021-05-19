@@ -70,7 +70,11 @@ namespace Server
             services.AddControllers();
             services.AddRazorPages();
 
-            services.AddSignalR();
+            services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = true;
+                options.MaximumReceiveMessageSize = null;
+            });
 
             services.AddAutoMapper(typeof(Startup));
         }
@@ -96,7 +100,7 @@ namespace Server
                 endpoints.MapControllers();
                 endpoints.MapRazorPages();
                 endpoints.MapHub<ChatHub>("/chat");
-            });            
+            });
         }
     }
 }

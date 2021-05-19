@@ -1,10 +1,10 @@
-﻿using Client.Models;
+﻿using Client.Commands;
+using Client.Models;
 using Microsoft.AspNetCore.SignalR.Client;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Threading.Tasks;
-using System.Windows.Input;
 
 namespace Client
 {
@@ -14,6 +14,7 @@ namespace Client
 
         public string UserName { get; set; }
         public string Message { get; set; }
+        public byte[] File { get; set; }
 
         public ObservableCollection<MessageData> Messages { get; }
 
@@ -62,7 +63,7 @@ namespace Client
 
             hubConnection.Closed += async (error) =>
             {
-                SendLocalMessage(string.Empty, "Connection closed");
+                SendLocalMessage(string.Empty, "Соединение закрыто");
                 IsConnected = false;
                 await Task.Delay(5000);
                 await Connect();
@@ -74,6 +75,10 @@ namespace Client
                     });
         }
 
+        /// <summary>
+        /// Executing connections to HUB
+        /// </summary>
+        /// <returns></returns>
         public async Task Connect()
         {
             if (IsConnected)
@@ -82,16 +87,20 @@ namespace Client
             try
             {
                 await hubConnection.StartAsync();
-                SendLocalMessage(string.Empty, "Connected in chat");
+                SendLocalMessage(string.Empty, "Подключён к чату");
 
                 IsConnected = true;
             }
             catch (Exception ex)
             {
-                SendLocalMessage(string.Empty, $"Connection error: {ex.Message}");
+                SendLocalMessage(string.Empty, $"Ошибка соединения: {ex.Message}");
             }
         }
 
+        /// <summary>
+        /// Executing disconnect to HUB
+        /// </summary>
+        /// <returns></returns>
         public async Task Disconnect()
         {
             if (!IsConnected)
@@ -100,9 +109,14 @@ namespace Client
             await hubConnection.StopAsync();
 
             IsConnected = false;
-            SendLocalMessage(string.Empty, "You was disconnect from chat");
+            SendLocalMessage(string.Empty, "Вы были отключены от чата");
         }
 
+        /// <summary>
+        /// 
+        /// </summary>
+        /// <param name="user"></param>
+        /// <param name="message"></param>
         private void SendLocalMessage(string user, string message)
         {
             Messages.Insert(0, new MessageData
@@ -112,16 +126,20 @@ namespace Client
             });
         }
 
+        /// <summary>
+        /// Sending asynchronous message to HUB 
+        /// </summary>
+        /// <returns></returns>
         async Task SendMessage()
         {
             try
             {
                 IsBusy = true;
-                await hubConnection.InvokeAsync("Send", UserName, Message);
+                await hubConnection.InvokeAsync("Send", UserName, Message, File);
             }
             catch (Exception ex)
             {
-                SendLocalMessage(string.Empty, $"Exception error: {ex.Message}");
+                SendLocalMessage(string.Empty, $"Критическая ошибка: {ex.Message}");
             }
             finally
             {
@@ -133,35 +151,6 @@ namespace Client
         public void OnPropertyChanged(string prop)
         {
             PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
-        }
-    }
-
-    public class Command : ICommand
-    {
-        private Action<object> execute;
-        private Func<object, bool> canExecute;
-
-        public event EventHandler CanExecuteChanged
-        {
-            add { CommandManager.RequerySuggested += value; }
-
-            remove { CommandManager.RequerySuggested -= value; }
-        }
-
-        public Command(Action<object> execute, Func<object, bool> canExecute = null)
-        {
-            this.execute = execute;
-            this.canExecute = canExecute;
-        }
-
-        public bool CanExecute(object parameter)
-        {
-            return canExecute == null || canExecute(parameter);
-        }
-
-        public void Execute(object parameter)
-        {
-            execute(parameter);
         }
     }
 }

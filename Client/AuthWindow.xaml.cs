@@ -1,8 +1,11 @@
 ﻿using Client.Data;
 using Client.Models;
+using Newtonsoft.Json;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Json;
 using System.Net.Mail;
+using System.Text.Json;
 using System.Windows;
 
 namespace Client
@@ -21,13 +24,12 @@ namespace Client
 
         private void Login(object sender, RoutedEventArgs e)
         {
-            MailAddress mail = null;
-
+            MailAddress mail;
             if (!MailAddress.TryCreate(LoginEmailBox.Text.Trim(), out mail))
             {
                 MessageBox.Show("Invalid email");
                 return;
-            }               
+            }
 
             if (string.IsNullOrWhiteSpace(mail.Address) || string.IsNullOrWhiteSpace(LoginPassBox.Password.Trim()))
             {
@@ -35,14 +37,14 @@ namespace Client
                 return;
             };
 
-            var user = new
+            var creditals = new
             {
                 Email = LoginEmailBox.Text,
                 Password = LoginPassBox.Password
             };
             using (var client = new HttpClient())
             {
-                var response = client.PostAsJsonAsync(App_Path + "/Auth/Login", user).Result;
+                var response = client.PostAsJsonAsync(App_Path + "/Auth/Login", creditals).Result;
 
                 var deserializedResponse = response.Content.ReadFromJsonAsync<UserManagerResponse>().Result;
 
@@ -50,12 +52,27 @@ namespace Client
                 {
                     using (var db = new UserContext())
                     {
-                        Token token = new()
+                        var user = JsonConvert.DeserializeObject<User>(((JsonElement)deserializedResponse.Model).GetRawText());
+
+                        if (db.Users.Find(user.Id) == null)
+                            db.Users.Add(user);
+
+                        var token = db.Tokens.FirstOrDefault(token => token.User == user);
+                        if (token == null)
                         {
-                            Value = deserializedResponse.Message,
-                            ExpireDate = (System.DateTime)deserializedResponse.ExpireDate
-                        };
-                        db.Tokens.Add(token);
+                            db.Tokens.Add(new()
+                            {
+                                Value = deserializedResponse.Message,
+                                ExpireDate = (System.DateTime)deserializedResponse.ExpireDate,
+                                User = user
+                            });
+                        }
+                        else
+                        {
+                            token.Value = deserializedResponse.Message;
+                            token.ExpireDate = (System.DateTime)deserializedResponse.ExpireDate;
+                        }
+
                         db.SaveChanges();
                     }
 

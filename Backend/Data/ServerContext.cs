@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
+using Server.Seeders;
 
 namespace Server.Data
 {
@@ -11,7 +12,10 @@ namespace Server.Data
             if (!Database.CanConnect())
             {
                 Database.Migrate();
-            }                
-        }
+                DatabaseSeeder.Run();
+            }
+
+            DatabaseSeeder.Run();
+        }        
     }
 }

@@ -64,7 +64,7 @@ namespace Client
                             {
                                 Value = deserializedResponse.Message,
                                 ExpireDate = (System.DateTime)deserializedResponse.ExpireDate,
-                                User = user
+                                UserId = user.Id
                             });
                         }
                         else

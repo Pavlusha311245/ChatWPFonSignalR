@@ -8,6 +8,7 @@
     <div id="loginBlock">
         Введите логин:<br />
         <input id="userName" type="text" />
+        <input id="userPassword" type="text" />
         <input id="loginBtn" type="button" value="Войти" />
     </div><br />
 
@@ -15,47 +16,66 @@
 
     <div id="inputForm">
         <input type="text" id="message" />
-        <input type="button" id="sendBtn" value="Отправить" />
+        <input type="button" id="sendBtn" disabled value="Отправить" />
     </div>
     <div id="chatroom"></div>
 
-    <script src="js/signalr.min.js"></script>
+    <script src="js//signalr.min.js"></script>
     <script>
-        let hubUrl = "https://localhost:44316/chat";
-        const hubConnection = new signalR.HubConnectionBuilder()
-            .withUrl(hubUrl)
-            .configureLogging(signalR.LogLevel.Information)
-            .build();
-        let userName = "";
-        // получение сообщения от сервера
-        hubConnection.on("Receive", function (userName, message) {
-
-            // создаем элемент <b> для имени пользователя
-            let userNameElem = document.createElement("b");
-            userNameElem.appendChild(document.createTextNode(userName + ": "));
-
-            // создает элемент <p> для сообщения пользователя
-            let elem = document.createElement("p");
-            elem.appendChild(userNameElem);
-            elem.appendChild(document.createTextNode(message));
-
-            var firstElem = document.getElementById("chatroom").firstChild;
-            document.getElementById("chatroom").insertBefore(elem, firstElem);
-
-        });
-
-        // установка имени пользователя
-        document.getElementById("loginBtn").addEventListener("click", function (e) {
-            userName = document.getElementById("userName").value;
-            document.getElementById("header").innerHTML = "<h3>Welcome " + userName + "</h3>";
-        });
-        // отправка сообщения на сервер
-        document.getElementById("sendBtn").addEventListener("click", function (e) {
-            let message = document.getElementById("message").value;
-            hubConnection.invoke("Send", userName, message);
-        });
-
-        hubConnection.start();
+        let token;      // токен
+        let username;   // имя пользователя
+        const hubConnection = new signalR.HubConnectionBuilder()
+            .withUrl("/chat", { accessTokenFactory: () => token})
+            .build();
+             
+        hubConnection.on("Receive", function (message, userName) {
+ 
+            // создаем элемент <b> для имени пользователя
+            let userNameElem = document.createElement("b");
+            userNameElem.appendChild(document.createTextNode(userName + ": "));
+ 
+            // создает элемент <p> для сообщения пользователя
+            let elem = document.createElement("p");
+            elem.appendChild(userNameElem);
+            elem.appendChild(document.createTextNode(message));
+ 
+            var firstElem = document.getElementById("chatroom").firstChild;
+            document.getElementById("chatroom").insertBefore(elem, firstElem);
+        });
+ 
+        // аутентификация
+        document.getElementById("loginBtn").addEventListener("click", function (e) {
+             
+            var request = new XMLHttpRequest();
+            // посылаем запрос на адрес "/token", в ответ получим токен и имя пользователя
+            request.open("POST", "/token", true);  
+            request.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            request.addEventListener("load", function () {
+                if (request.status < 400) { // если запрос успешный
+ 
+                    let data = JSON.parse(request.response);   // парсим ответ 
+                    token = data.access_token;
+                    username = data.username;
+ 
+                    document.getElementById("sendBtn").disabled = false;
+ 
+                    hubConnection.start()       // начинаем соединение с хабом
+                    .catch(err => { 
+                        console.error(err.toString());
+                        document.getElementById("loginBtn").disabled = true;
+                        document.getElementById("sendBtn").disabled = true;
+                    });
+                }
+            });
+            // отправляем запрос на аутентификацию
+            request.send("username=" + document.getElementById("userName").value +
+                "&password=" + document.getElementById("userPassword").value);
+        });
+        // отправка сообщения на сервер
+        document.getElementById("sendBtn").addEventListener("click", function (e) {
+            let message = document.getElementById("message").value;
+            hubConnection.invoke("Send", message, username);
+        });
     </script>
 </body>
 </html>

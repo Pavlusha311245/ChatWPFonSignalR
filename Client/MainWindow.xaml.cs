@@ -5,8 +5,6 @@ using System;
 using System.IO;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
 
 namespace Client
 {
@@ -22,22 +20,20 @@ namespace Client
         public MainWindow()
         {
             InitializeComponent();
-            viewModel = new ChatViewModel();
-            
 
             using (db = new UserContext())
             {
-                if (db.Users.FirstOrDefault() == null || db.Tokens.Any(token => token.User == user && token.ExpireDate < DateTime.Now))
+                user = db.Users.FirstOrDefault();
+                var validToken = db.Tokens.FirstOrDefault(token => token.UserId == user.Id);
+
+                if (user == null || validToken == null || validToken.ExpireDate < DateTime.Now)
                 {
                     var auth = new AuthWindow();
                     if (auth.ShowDialog() == false)
                         Close();
                 }
-                else
-                {
-                    user = db.Users.FirstOrDefault();
-                    viewModel.UserName = $"{user.Name} {user.Surname}";
-                }
+
+                viewModel = new ChatViewModel(db.Tokens.FirstOrDefault(token => token.UserId == user.Id).Value);
             }
 
             DataContext = viewModel;
@@ -67,23 +63,9 @@ namespace Client
                 System.Text.Encoding.UTF8.GetBytes(extention).CopyTo(extentionBytes, 0);
                 var result = extentionBytes.Concat(File.ReadAllBytes(openFile.FileName).ToList());
 
-                var documentBtn = new Button()
-                {
-                    Content = Path.GetFileName(openFile.FileName),
-                    Width = 150,
-                    Height = 30
-                };
-                documentBtn.Click += DocumentBtn_Click;
-                Documents.Children.Add(documentBtn);
-
                 viewModel.File = result.ToArray();
-                DataContext = viewModel;
+                //DataContext = viewModel;
             }
-        }
-
-        private void DocumentBtn_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show(sender.ToString());
         }
     }
 }

@@ -1,7 +1,9 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,7 +13,9 @@ using Server.Data;
 using Server.Hubs;
 using Server.Interfaces;
 using Server.Models;
+using Server.Providers;
 using Server.Services;
+using System.Threading.Tasks;
 
 namespace Server
 {
@@ -62,6 +66,19 @@ namespace Server
                     IssuerSigningKey = jwt.GetSymmetricSecurityKey(),
                     ValidateIssuerSigningKey = true
                 };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        var accessToken = context.Request.Query["access_token"];
+                        var path = context.HttpContext.Request.Path;
+                        if (!string.IsNullOrEmpty(accessToken) &&
+                            (path.StartsWithSegments("/hubs/chat")))
+                            context.Token = accessToken;
+
+                        return Task.CompletedTask;
+                    }
+                };
             });
 
             services.AddScoped<IUserService, AuthService>();
@@ -77,6 +94,8 @@ namespace Server
             });
 
             services.AddAutoMapper(typeof(Startup));
+
+            services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

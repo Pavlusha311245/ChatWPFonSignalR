@@ -1,6 +1,7 @@
 ﻿using Client.Commands;
 using Client.Models;
 using Microsoft.AspNetCore.SignalR.Client;
+using Microsoft.Extensions.Logging;
 using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -12,7 +13,6 @@ namespace Client
     {
         HubConnection hubConnection;
 
-        public string UserName { get; set; }
         public string Message { get; set; }
         public byte[] File { get; set; }
 
@@ -46,12 +46,22 @@ namespace Client
             }
         }
 
-        public Command SendMessageCommand { get; }
+        public SendMessageCommand SendMessageCommand { get; }
 
-        public ChatViewModel()
+        public ChatViewModel(string accessToken)
         {
             hubConnection = new HubConnectionBuilder()
-                .WithUrl("https://localhost:44316/chat")
+                .WithUrl("https://localhost:44316/chat", options =>
+                {
+                    options.AccessTokenProvider = () => Task.FromResult(accessToken);
+                })
+                .ConfigureLogging(logging =>
+                {
+                    logging.SetMinimumLevel(LogLevel.Information);
+                    logging.AddFilter("Microsoft.AspNetCore.SignalR", LogLevel.Debug);
+                    logging.AddFilter("Microsoft.AspNetCore.Http.Connections", LogLevel.Debug);
+                })
+                .WithAutomaticReconnect()
                 .Build();
 
             Messages = new ObservableCollection<MessageData>();
@@ -59,7 +69,7 @@ namespace Client
             IsConnected = false;
             IsBusy = false;
 
-            SendMessageCommand = new Command(async o => await SendMessage(), o => IsConnected);
+            SendMessageCommand = new SendMessageCommand(async o => await SendMessage(), o => IsConnected);
 
             hubConnection.Closed += async (error) =>
             {
@@ -135,7 +145,8 @@ namespace Client
             try
             {
                 IsBusy = true;
-                await hubConnection.InvokeAsync("Send", UserName, Message, File);
+                await hubConnection.InvokeAsync("Send", Message, File);
+                File = null;
             }
             catch (Exception ex)
             {

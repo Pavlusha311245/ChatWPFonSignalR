@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <None Remove="logo.jpg" />
+    <None Remove="send.png" />
   </ItemGroup>
 
   <ItemGroup>
@@ -28,6 +29,7 @@
 
   <ItemGroup>
     <Resource Include="logo.jpg" />
+    <Resource Include="send.png" />
   </ItemGroup>
 
 </Project>

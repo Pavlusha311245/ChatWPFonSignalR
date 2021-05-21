@@ -3,7 +3,7 @@ using System.Windows.Input;
 
 namespace Client.Commands
 {
-    public class Command : ICommand
+    public class SendMessageCommand : ICommand
     {
         private Action<object> execute;
         private Func<object, bool> canExecute;
@@ -15,7 +15,7 @@ namespace Client.Commands
             remove { CommandManager.RequerySuggested -= value; }
         }
 
-        public Command(Action<object> execute, Func<object, bool> canExecute = null)
+        public SendMessageCommand(Action<object> execute, Func<object, bool> canExecute = null)
         {
             this.execute = execute;
             this.canExecute = canExecute;

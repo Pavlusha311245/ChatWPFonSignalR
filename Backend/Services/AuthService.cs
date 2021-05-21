@@ -171,6 +171,7 @@ namespace Server.Services
             };
 
             var result = await userManager.CreateAsync(user, model.Password);
+            await userManager.AddClaimAsync(user, new Claim(ClaimTypes.Email, user.Email));
 
             if (!result.Succeeded)
                 return new UserManagerResponse

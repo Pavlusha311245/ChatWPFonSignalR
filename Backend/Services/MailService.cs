@@ -1,7 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using MailKit.Net.Smtp;
+using Microsoft.Extensions.Configuration;
+using MimeKit;
 using Server.Interfaces;
-using System.Net;
-using System.Net.Mail;
 using System.Threading.Tasks;
 
 namespace Server.Services
@@ -21,19 +21,23 @@ namespace Server.Services
         /// <returns></returns>
         public async Task SendEmailAsync(string toEmail, string subject, string content)
         {
-            var from = new MailAddress(emailConfiruration["EmailConfig:From"]);
-            var to = new MailAddress(toEmail);
+            var emailMessage = new MimeMessage();
+            emailMessage.From.Add(new MailboxAddress("GGKTTD", emailConfiruration["EmailConfig:From"]));
+            emailMessage.To.Add(MailboxAddress.Parse(toEmail));
+            emailMessage.Subject = subject;
+            emailMessage.Body = new TextPart(MimeKit.Text.TextFormat.Html)
+            {
+                Text = content,
+            };
 
-            var message = new MailMessage(from, to);
-            message.Subject = subject;
-            message.Body = content;
-            message.IsBodyHtml = true;
+            using (var client = new SmtpClient())
+            {
+                await client.ConnectAsync(emailConfiruration["EmailConfig:Provider"], int.Parse(emailConfiruration["EmailConfig:Port"]), false);
+                await client.AuthenticateAsync(emailConfiruration["EmailConfig:Username"], emailConfiruration["EmailConfig:Password"]);
+                await client.SendAsync(emailMessage);
 
-            var email = new SmtpClient(emailConfiruration["EmailConfig:Provider"], int.Parse(emailConfiruration["EmailConfig:Port"]));
-            email.Credentials = new NetworkCredential(emailConfiruration["EmailConfig:Username"], emailConfiruration["EmailConfig:Password"]);
-            email.EnableSsl = true;
-
-            await email.SendMailAsync(message);
+                await client.DisconnectAsync(true);
+            }
         }
     }
 }

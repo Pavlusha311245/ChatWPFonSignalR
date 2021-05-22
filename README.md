@@ -1,1 +1,1 @@
-# IntracollegiateChat
+# SinglaR chat

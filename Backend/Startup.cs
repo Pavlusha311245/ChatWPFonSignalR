@@ -107,12 +107,11 @@ namespace Server
 
             app.UseHttpsRedirection();
 
-            app.UseRouting();
-
             app.UseStaticFiles();
 
-            app.UseAuthorization();
             app.UseAuthentication();
+            app.UseRouting();
+            app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
             {

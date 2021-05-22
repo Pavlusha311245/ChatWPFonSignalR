@@ -1,19 +1,17 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Server.Data;
 using Server.Models;
 using Server.ViewModel;
-using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Threading.Tasks;
-
-// For more information on enabling Web API for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
 namespace Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UsersController : ControllerBase
     {
         public ServerContext db;
@@ -53,7 +51,7 @@ namespace Server.Controllers
 
         // DELETE api/<UserController>/5
         [HttpDelete("{id}")]
-        public void Delete(int id)
+        public void Delete(string id)
         {
         }
     }

@@ -24,19 +24,30 @@ namespace Client
             using (db = new UserContext())
             {
                 user = db.Users.FirstOrDefault();
-                var validToken = db.Tokens.FirstOrDefault(token => token.UserId == user.Id);
 
-                if (user == null || validToken == null || validToken.ExpireDate < DateTime.Now)
-                {
-                    var auth = new AuthWindow();
-                    if (auth.ShowDialog() == false)
-                        Close();
-                }
+                if (user == null)
+                    user = AuthorizationForm();
+
+                Token accessToken = db.Tokens.FirstOrDefault(token => token.UserId == user.Id);
+
+                if (accessToken == null && accessToken.ExpireDate < DateTime.Now)
+                    user = AuthorizationForm();
 
                 viewModel = new ChatViewModel(db.Tokens.FirstOrDefault(token => token.UserId == user.Id).Value);
             }
 
             DataContext = viewModel;
+        }
+
+        private User AuthorizationForm()
+        {
+            var auth = new AuthWindow();
+            AuthWindow content = null;
+            if (auth.ShowDialog() == true)
+                content = auth.Content as AuthWindow;
+            else Close();
+
+            return content.userObject;
         }
 
         protected override async void OnActivated(EventArgs e)

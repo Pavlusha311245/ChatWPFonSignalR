@@ -13,8 +13,7 @@ namespace Client
     {
         HubConnection hubConnection;
 
-        public string Message { get; set; }
-        public byte[] File { get; set; }
+        public Server.Models.Message MessageTask { get; set; }
 
         public ObservableCollection<MessageData> Messages { get; }
 
@@ -123,7 +122,7 @@ namespace Client
         }
 
         /// <summary>
-        /// 
+        /// Send MessageData to WPF application
         /// </summary>
         /// <param name="user"></param>
         /// <param name="message"></param>
@@ -145,8 +144,7 @@ namespace Client
             try
             {
                 IsBusy = true;
-                await hubConnection.InvokeAsync("Send", Message, File);
-                File = null;
+                await hubConnection.InvokeAsync("Send", MessageTask);
             }
             catch (Exception ex)
             {

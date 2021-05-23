@@ -1,6 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
-using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
@@ -15,7 +14,6 @@ using Server.Interfaces;
 using Server.Models;
 using Server.Providers;
 using Server.Services;
-using System.Threading.Tasks;
 
 namespace Server
 {
@@ -76,7 +74,7 @@ namespace Server
                             (path.StartsWithSegments("/hubs/chat")))
                             context.Token = accessToken;
 
-                        return Task.CompletedTask;
+                        return System.Threading.Tasks.Task.CompletedTask;
                     }
                 };
             });

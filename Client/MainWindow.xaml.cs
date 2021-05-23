@@ -1,9 +1,11 @@
 ﻿using Client.Data;
 using Client.Models;
 using Microsoft.Win32;
+using Server.Models;
 using System;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Windows;
 
 namespace Client
@@ -21,7 +23,7 @@ namespace Client
         {
             InitializeComponent();
 
-            using (db = new UserContext())
+            using (db = new UserContext(string.Empty))
             {
                 user = db.Users.FirstOrDefault();
 
@@ -35,6 +37,8 @@ namespace Client
 
                 viewModel = new ChatViewModel(db.Tokens.FirstOrDefault(token => token.UserId == user.Id).Value);
             }
+
+            viewModel.MessageTask = new Message();
 
             DataContext = viewModel;
         }
@@ -65,16 +69,28 @@ namespace Client
         {
             OpenFileDialog openFile = new();
             openFile.Filter = "Doc files (*.doc;*.docx)|*.doc;*.docx|Text files (*.txt)|*.txt";
-            openFile.Multiselect = false;
+            openFile.Multiselect = true;
 
             if (openFile.ShowDialog() == true)
             {
-                string extention = Path.GetExtension(openFile.FileName);
-                var extentionBytes = new byte[5];
-                System.Text.Encoding.UTF8.GetBytes(extention).CopyTo(extentionBytes, 0);
-                var result = extentionBytes.Concat(File.ReadAllBytes(openFile.FileName).ToList());
+                Task task = new();
 
-                viewModel.File = result.ToArray();
+                foreach (var fileName in openFile.FileNames)
+                {
+                    var fileContent = File.ReadAllBytes(openFile.FileName);
+                    var document = new Document
+                    {
+                        Extension = Path.GetExtension(fileName),
+                        Content = fileContent,
+                        Hash = Convert.ToBase64String(MD5.HashData(fileContent))
+                    };
+                    task.Documents.Add(document);
+                }
+
+                task.DeadLine = DateTime.Now;
+                task.Remark = "";
+
+                viewModel.MessageTask.Task = task;
                 //DataContext = viewModel;
             }
         }

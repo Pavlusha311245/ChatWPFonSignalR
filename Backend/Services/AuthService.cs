@@ -197,9 +197,7 @@ namespace Server.Services
             string url = $"{configuration["AppUrl"]}/api/auth/confirmemail?userid={user.Id}&token={confirmEmailToken}";
 
             await mailService.SendEmailAsync(user.Email, "Confirm your email",
-                $"<h1>Welcome to Auth Demo</h1>" +
-                $"<p>Please confirm your email by <a href='{url}'>Clicking here</a></p>");
-
+                $"<h1>Welcome to Auth Demo</h1><p>Please confirm your email by <a href='{url}'>Clicking here</a></p>");
 
             return new UserManagerResponse
             {

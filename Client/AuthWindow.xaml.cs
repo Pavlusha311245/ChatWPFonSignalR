@@ -52,7 +52,7 @@ namespace Client
 
                 if (deserializedResponse.IsSuccess)
                 {
-                    using (var db = new UserContext())
+                    using (var db = new UserContext(string.Empty))
                     {
                         var user = JsonConvert.DeserializeObject<User>(((JsonElement)deserializedResponse.Model).GetRawText());
                         userObject = user;

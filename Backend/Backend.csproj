@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <TargetFramework>net5.0</TargetFramework>
-    <GeneratePackageOnBuild>false</GeneratePackageOnBuild>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageId>Server</PackageId>
     <Authors>Pavlusha(Zavadski Pavel Andreevish)</Authors>
@@ -12,6 +12,9 @@
     <RootNamespace>Server</RootNamespace>
     <UserSecretsId>6a495821-2f6b-4925-8a4b-818e24b7a987</UserSecretsId>
     <ApplicationIcon>logo.ico</ApplicationIcon>
+    <RepositoryUrl>https://github.com/Pavlusha311245/ChatWPFonSignalR</RepositoryUrl>
+    <StartupObject></StartupObject>
+    <OutputType>Exe</OutputType>
   </PropertyGroup>
 
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">

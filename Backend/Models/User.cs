@@ -1,11 +1,12 @@
 ﻿using Microsoft.AspNetCore.Identity;
+using System.Collections.Generic;
 
 namespace Server.Models
 {
     public class User : IdentityUser
     {
-        public string Name { get; set; }
-        public string Surname { get; set; }
-        public string Patronymic { get; set; }
+        public List<Task> Tasks { get; set; } = new();
+
+        public PersonalData PersonalData { get; set; }
     }
 }

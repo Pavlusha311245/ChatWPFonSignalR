@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
+using Server.Data;
 using System.Text;
 using System.Threading.Tasks;
 
@@ -8,22 +9,21 @@ namespace Server.Hubs
     [Authorize]
     public class ChatHub : Hub
     {
-        byte[] file;
+        public Models.Message Message { get; set; }
 
         public override async Task OnConnectedAsync()
         {
             await Clients.All.SendAsync("Notify", $"Подключён {Context.UserIdentifier}");
         }
 
-        public async Task Send(string message, byte[] file)
+        public async Task Send(Models.Message message)
         {
-            this.file = file;
-            //var ext = Encoding.UTF8.GetString(file[0..5]);
+            if (message.Task != null)
+            {
 
-            var user = Context.User.Identity.Name;
-            var username = Context.UserIdentifier;
+            }
 
-            await Clients.All.SendAsync("Receive", username, message);
+            await Clients.All.SendAsync("Receive", Context.UserIdentifier, message.MessageText);
         }
 
         [Authorize(Roles = "Administration")]

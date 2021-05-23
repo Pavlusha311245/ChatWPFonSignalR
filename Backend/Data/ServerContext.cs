@@ -7,15 +7,15 @@ namespace Server.Data
 {
     public class ServerContext : IdentityDbContext<User>
     {
+        public DbSet<Task> Tasks { get; set; }
+        public DbSet<Message> Messages { get; set; }
+
         public ServerContext(DbContextOptions<ServerContext> options) : base(options)
         {
             if (!Database.CanConnect())
             {
                 Database.Migrate();
-                DatabaseSeeder.Run();
             }
-
-            DatabaseSeeder.Run();
         }        
     }
 }

@@ -125,7 +125,8 @@ namespace Server.Services
 
             var claims = new List<Claim>
             {
-                new Claim(ClaimTypes.Email, model.Email),
+                new Claim(ClaimTypes.Email, user.Email),
+                new Claim(ClaimsIdentity.DefaultNameClaimType, user.UserName),
                 new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
             };
 
@@ -140,6 +141,7 @@ namespace Server.Services
                 issuer: jwt.ISSUER,
                 audience: jwt.AUDIENCE,
                 claims: claims,
+                notBefore: DateTime.UtcNow,
                 expires: DateTime.Now.AddDays(7),
                 signingCredentials: new SigningCredentials(key, SecurityAlgorithms.HmacSha256));
 

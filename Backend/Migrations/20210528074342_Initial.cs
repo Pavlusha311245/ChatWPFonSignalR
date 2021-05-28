@@ -47,20 +47,6 @@ namespace Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Messages",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    MessageText = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Timestamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Messages", x => x.Id);
-                });
-
-            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -167,6 +153,27 @@ namespace Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Messages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    MessageText = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    Timestamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Messages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Messages_AspNetUsers_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "PersonalData",
                 columns: table => new
                 {
@@ -199,11 +206,18 @@ namespace Server.Migrations
                     DeadLine = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Done = table.Column<bool>(type: "bit", nullable: false),
                     MessageId = table.Column<int>(type: "int", nullable: false),
+                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
                     Timestamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tasks", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Tasks_AspNetUsers_UserId",
+                        column: x => x.UserId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Tasks_Messages_MessageId",
                         column: x => x.MessageId,
@@ -234,30 +248,6 @@ namespace Server.Migrations
                         principalTable: "Tasks",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "TaskUser",
-                columns: table => new
-                {
-                    TasksId = table.Column<int>(type: "int", nullable: false),
-                    UsersId = table.Column<string>(type: "nvarchar(450)", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_TaskUser", x => new { x.TasksId, x.UsersId });
-                    table.ForeignKey(
-                        name: "FK_TaskUser_AspNetUsers_UsersId",
-                        column: x => x.UsersId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_TaskUser_Tasks_TasksId",
-                        column: x => x.TasksId,
-                        principalTable: "Tasks",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -305,6 +295,11 @@ namespace Server.Migrations
                 column: "TaskId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_Messages_UserID",
+                table: "Messages",
+                column: "UserID");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PersonalData_UserID",
                 table: "PersonalData",
                 column: "UserID",
@@ -318,9 +313,9 @@ namespace Server.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_TaskUser_UsersId",
-                table: "TaskUser",
-                column: "UsersId");
+                name: "IX_Tasks_UserId",
+                table: "Tasks",
+                column: "UserId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -347,19 +342,16 @@ namespace Server.Migrations
                 name: "PersonalData");
 
             migrationBuilder.DropTable(
-                name: "TaskUser");
-
-            migrationBuilder.DropTable(
                 name: "AspNetRoles");
-
-            migrationBuilder.DropTable(
-                name: "AspNetUsers");
 
             migrationBuilder.DropTable(
                 name: "Tasks");
 
             migrationBuilder.DropTable(
                 name: "Messages");
+
+            migrationBuilder.DropTable(
+                name: "AspNetUsers");
         }
     }
 }

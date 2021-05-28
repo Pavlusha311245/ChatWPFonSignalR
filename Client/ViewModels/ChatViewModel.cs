@@ -2,20 +2,33 @@
 using Client.Models;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
+using Newtonsoft.Json;
+using Notification.Wpf;
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
+using System.IO;
+using System.Media;
+using System.Net;
 using System.Threading.Tasks;
+using System.Windows.Controls;
 
 namespace Client
 {
     class ChatViewModel : INotifyPropertyChanged
     {
         HubConnection hubConnection;
+        HttpWebRequest httpRequest;
 
         public Server.Models.Message MessageTask { get; set; }
 
+        public ObservableCollection<ListBoxItem> Users { get; set; }
         public ObservableCollection<MessageData> Messages { get; }
+
+        public NotificationManager NotificationManager { get; set; }
+
+        public string AppUrlString { get; set; } = @"https://localhost:44316";
 
         bool isBusy;
         public bool IsBusy
@@ -50,7 +63,7 @@ namespace Client
         public ChatViewModel(string accessToken)
         {
             hubConnection = new HubConnectionBuilder()
-                .WithUrl("https://localhost:44316/chat", options =>
+                .WithUrl(AppUrlString + "/chat", options =>
                 {
                     options.AccessTokenProvider = () => Task.FromResult(accessToken);
                 })
@@ -63,25 +76,40 @@ namespace Client
                 .WithAutomaticReconnect()
                 .Build();
 
+            httpRequest = WebRequest.CreateHttp(AppUrlString + "/api/Users");
+            httpRequest.PreAuthenticate = true;
+            httpRequest.Headers.Add("Authorization", "Bearer " + accessToken);
+            httpRequest.ContentType = "application/json";
+
             Messages = new ObservableCollection<MessageData>();
+            Users = new ObservableCollection<ListBoxItem>();
 
             IsConnected = false;
             IsBusy = false;
 
-            SendMessageCommand = new SendMessageCommand(async o => await SendMessage(), o => IsConnected);
+            SendMessageCommand = new SendMessageCommand(async o => await SendMessageToEveryOne(), o => IsConnected);
+
+            NotificationManager = new NotificationManager();
 
             hubConnection.Closed += async (error) =>
             {
-                SendLocalMessage(string.Empty, "Соединение закрыто");
                 IsConnected = false;
-                await Task.Delay(5000);
+                await Task.Delay(3000);
                 await Connect();
             };
 
             hubConnection.On<string, string>("Receive", (user, message) =>
                     {
-                        SendLocalMessage(user, message);
+                        SendDataToMessageListView(user, message);
                     });
+
+            hubConnection.On<string>("Connected", (message) =>
+            {
+                NotificationManager.Show("Информация", message, NotificationType.Information);
+                SystemSounds.Exclamation.Play();
+                IsBusy = true;
+                IsConnected = true;
+            });
         }
 
         /// <summary>
@@ -96,13 +124,29 @@ namespace Client
             try
             {
                 await hubConnection.StartAsync();
-                SendLocalMessage(string.Empty, "Подключён к чату");
 
+                var response = (HttpWebResponse)(await httpRequest.GetResponseAsync());
+                var stream = response.GetResponseStream();
+
+                string jsonString;
+                using (StreamReader streamReader = new(stream))
+                    jsonString = await streamReader.ReadToEndAsync();
+
+                var users = JsonConvert.DeserializeObject<IEnumerable<User>>(jsonString);
+
+                foreach (var user in users)
+                {
+                    ListBoxItem listBoxItem = new();
+                    listBoxItem.Content = user.Email;
+                    Users.Insert(0, listBoxItem);
+                }
+
+                MessageTask.Task = null;
                 IsConnected = true;
             }
             catch (Exception ex)
             {
-                SendLocalMessage(string.Empty, $"Ошибка соединения: {ex.Message}");
+                NotificationManager.Show("Предупреждение", ex.Message, NotificationType.Error);
             }
         }
 
@@ -118,7 +162,7 @@ namespace Client
             await hubConnection.StopAsync();
 
             IsConnected = false;
-            SendLocalMessage(string.Empty, "Вы были отключены от чата");
+            SendDataToMessageListView(string.Empty, "Вы были отключены от чата");
         }
 
         /// <summary>
@@ -126,7 +170,7 @@ namespace Client
         /// </summary>
         /// <param name="user"></param>
         /// <param name="message"></param>
-        private void SendLocalMessage(string user, string message)
+        private void SendDataToMessageListView(string user, string message)
         {
             Messages.Insert(0, new MessageData
             {
@@ -139,16 +183,17 @@ namespace Client
         /// Sending asynchronous message to HUB 
         /// </summary>
         /// <returns></returns>
-        async Task SendMessage()
+        async Task SendMessageToEveryOne()
         {
             try
             {
                 IsBusy = true;
-                await hubConnection.InvokeAsync("Send", MessageTask);
+                await hubConnection.InvokeAsync("SendToEveryone", MessageTask);
+                MessageTask.Task = null;
             }
             catch (Exception ex)
             {
-                SendLocalMessage(string.Empty, $"Критическая ошибка: {ex.Message}");
+                SendDataToMessageListView(string.Empty, $"Критическая ошибка: {ex.Message}");
             }
             finally
             {

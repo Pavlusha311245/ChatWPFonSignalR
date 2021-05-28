@@ -199,7 +199,12 @@ namespace Server.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<string>("UserID")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
+
+                    b.HasIndex("UserID");
 
                     b.ToTable("Messages");
                 });
@@ -259,10 +264,15 @@ namespace Server.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
+                    b.Property<string>("UserId")
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("MessageId")
                         .IsUnique();
+
+                    b.HasIndex("UserId");
 
                     b.ToTable("Tasks");
                 });
@@ -332,21 +342,6 @@ namespace Server.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
-            modelBuilder.Entity("TaskUser", b =>
-                {
-                    b.Property<int>("TasksId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UsersId")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("TasksId", "UsersId");
-
-                    b.HasIndex("UsersId");
-
-                    b.ToTable("TaskUser");
-                });
-
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -405,6 +400,15 @@ namespace Server.Migrations
                         .HasForeignKey("TaskId");
                 });
 
+            modelBuilder.Entity("Server.Models.Message", b =>
+                {
+                    b.HasOne("Server.Models.User", "User")
+                        .WithMany("Messages")
+                        .HasForeignKey("UserID");
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("Server.Models.PersonalData", b =>
                 {
                     b.HasOne("Server.Models.User", "User")
@@ -422,22 +426,13 @@ namespace Server.Migrations
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
+                    b.HasOne("Server.Models.User", "User")
+                        .WithMany("Tasks")
+                        .HasForeignKey("UserId");
+
                     b.Navigation("Message");
-                });
 
-            modelBuilder.Entity("TaskUser", b =>
-                {
-                    b.HasOne("Server.Models.Task", null)
-                        .WithMany()
-                        .HasForeignKey("TasksId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("Server.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UsersId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Server.Models.Message", b =>
@@ -452,7 +447,11 @@ namespace Server.Migrations
 
             modelBuilder.Entity("Server.Models.User", b =>
                 {
+                    b.Navigation("Messages");
+
                     b.Navigation("PersonalData");
+
+                    b.Navigation("Tasks");
                 });
 #pragma warning restore 612, 618
         }

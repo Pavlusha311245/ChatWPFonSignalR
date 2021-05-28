@@ -11,10 +11,12 @@ namespace Server.Models
         public DateTime DeadLine { get; set; }
         public bool Done { get; set; }
         public List<Document> Documents { get; set; } = new();
-        public List<User> Users { get; set; } = new();
 
         public int MessageId { get; set; }
         public Message Message { get; set; }
+
+        public string UserId { get; set; }
+        public User User { get; set; }
 
         [Timestamp]
         public byte[] Timestamp { get; set; }

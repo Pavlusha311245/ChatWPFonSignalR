@@ -3,11 +3,11 @@ using System.Security.Claims;
 
 namespace Server.Providers
 {
-    public class EmailBasedUserIdProvider : IUserIdProvider
+    public class CustomUserIdProvider  : IUserIdProvider
     {
         public virtual string GetUserId(HubConnectionContext connection)
         {
-            return connection.User?.FindFirst(ClaimTypes.Email)?.Value;
+            return connection.User?.FindFirst(ClaimTypes.Name)?.Value;
         }
     }
 }

@@ -1,11 +1,15 @@
 ﻿using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Extensions.Logging;
 using Server.Data;
 using Server.Models;
 using Server.ViewModel;
+using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 
 namespace Server.Controllers
 {
@@ -16,11 +20,13 @@ namespace Server.Controllers
     {
         public ServerContext db;
         public IMapper mapper;
+        public UserManager<User> userManager;
 
-        public UsersController(ServerContext db, IMapper mapper)
+        public UsersController(ServerContext db, IMapper mapper, UserManager<User> userManager)
         {
             this.db = db;
             this.mapper = mapper;
+            this.userManager = userManager;
         }
 
         // GET: api/<UserController>
@@ -32,9 +38,9 @@ namespace Server.Controllers
 
         // GET api/<UserController>/5
         [HttpGet("{id}")]
-        public UserViewModel Get(string id)
+        public async Task<UserViewModel> Get(string id)
         {
-            return mapper.Map<User, UserViewModel>(db.Users.FirstOrDefault(user => user.Id == id));
+            return mapper.Map<User, UserViewModel>(await userManager.FindByIdAsync(id));
         }
 
         // POST api/<UserController>
@@ -47,12 +53,26 @@ namespace Server.Controllers
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
         {
+            
         }
 
         // DELETE api/<UserController>/5
         [HttpDelete("{id}")]
-        public void Delete(string id)
+        public async Task<IActionResult> Delete(string id)
         {
+            try
+            {
+                await userManager.DeleteAsync(await userManager.FindByIdAsync(id));
+            }
+            catch (ArgumentNullException ex)
+            {
+                return BadRequest(new
+                {
+                    Error = "Not found " + ex.ParamName
+                });
+            }
+
+            return Ok(new { Message = "User successfully deleted" });
         }
     }
 }

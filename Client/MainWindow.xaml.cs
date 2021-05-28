@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Windows;
+using System.Windows.Controls.Primitives;
 
 namespace Client
 {
@@ -21,6 +22,7 @@ namespace Client
 
         public MainWindow()
         {
+            Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
             InitializeComponent();
 
             using (db = new UserContext(string.Empty))
@@ -28,12 +30,12 @@ namespace Client
                 user = db.Users.FirstOrDefault();
 
                 if (user == null)
-                    user = AuthorizationForm();
+                    AuthorizationForm();
 
                 Token accessToken = db.Tokens.FirstOrDefault(token => token.UserId == user.Id);
 
                 if (accessToken == null && accessToken.ExpireDate < DateTime.Now)
-                    user = AuthorizationForm();
+                    AuthorizationForm();
 
                 viewModel = new ChatViewModel(db.Tokens.FirstOrDefault(token => token.UserId == user.Id).Value);
             }
@@ -43,15 +45,11 @@ namespace Client
             DataContext = viewModel;
         }
 
-        private User AuthorizationForm()
+        private void AuthorizationForm()
         {
             var auth = new AuthWindow();
-            AuthWindow content = null;
-            if (auth.ShowDialog() == true)
-                content = auth.Content as AuthWindow;
-            else Close();
-
-            return content.userObject;
+            if (auth.ShowDialog() != true)
+                Close();
         }
 
         protected override async void OnActivated(EventArgs e)
@@ -91,8 +89,13 @@ namespace Client
                 task.Remark = "";
 
                 viewModel.MessageTask.Task = task;
-                //DataContext = viewModel;
             }
+        }
+
+        private void OpenSettings(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            //MyPopup.IsOpen = true;
+            //this.IsEnabled = false;
         }
     }
 }

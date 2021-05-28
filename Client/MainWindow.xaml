@@ -7,33 +7,54 @@
         d:DataContext="{d:DesignInstance Type={x:Type local:ChatViewModel}}"
         mc:Ignorable="d"
         Title="MainWindow" Width="800"
-        Style="{DynamicResource CustomWindowStyle}" BorderThickness="0,0,0,0" Height="500" MinWidth="800" Margin="0,0,0,0">
+        Background="{DynamicResource MaterialDesignPaper}"
+        TextElement.Foreground="{DynamicResource MaterialDesignBody}"
+        WindowState="Maximized"
+        BorderThickness="0,0,0,0" Height="500" MinWidth="800" Margin="0,0,0,0" MinHeight="500">
     <Grid Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
         <Grid.RowDefinitions>
             <RowDefinition Height="25"/>
-            <RowDefinition MinHeight="400" Height="22*"/>
-            <RowDefinition Height="50"/>
+            <RowDefinition />
+            <RowDefinition Height="60"/>
         </Grid.RowDefinitions>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition MinWidth="200"/>
-            <ColumnDefinition Width="91*"/>
-            <ColumnDefinition MaxWidth="150" Width="30*"/>
+            <ColumnDefinition Width="50"/>
+            <ColumnDefinition MaxWidth="250" Width="*"/>
+            <ColumnDefinition Width="60"/>
+            <ColumnDefinition/>
+            <ColumnDefinition Width="60"/>
         </Grid.ColumnDefinitions>
 
-        <Grid Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"/>
+        <Grid Grid.Row="0" Grid.Column="2" Grid.ColumnSpan="3"/>
 
-        <ListView x:Name="listView" ItemsSource="{Binding Messages}" Grid.Column="1" Grid.Row="1" d:LayoutOverrides="VerticalAlignment" Grid.ColumnSpan="2" Margin="0,0,0,0">
+        <ListView x:Name="listView" ItemsSource="{Binding Messages}" Grid.Column="2" Grid.Row="1" d:LayoutOverrides="VerticalAlignment" Grid.ColumnSpan="3" Margin="0,0,0,0">
             <ListView.View>
                 <GridView AllowsColumnReorder="True">
-                    <GridViewColumn DisplayMemberBinding="{Binding User}" Width="150"/>
-                    <GridViewColumn DisplayMemberBinding="{Binding Message}" Width="450"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding User}"/>
+                    <GridViewColumn DisplayMemberBinding="{Binding Message}"/>
                 </GridView>
             </ListView.View>
         </ListView>
 
-        <TextBox x:Name="textBox" Text="{Binding MessageTask.MessageText}" TextWrapping="Wrap" Grid.Row="2" Margin="5,5,5,5" Grid.Column="1" Height="25"/>
-        <Button x:Name="SendMessageBtn" Command="{Binding SendMessageCommand}" Grid.Column="2" Grid.Row="2" MinHeight="20" Content="Отправить" Margin="25,5,25,0" Width="100" Height="20" VerticalAlignment="Top" d:LayoutOverrides="Height"/>
-        <Button x:Name="AddFile" Content="Добавить файл" HorizontalAlignment="Center" VerticalAlignment="Top" Click="ChooseFile" MinHeight="20" MinWidth="70" Margin="0,25,0,0" Grid.Column="2" Grid.Row="2" Width="100"/>
-        <ListBox x:Name="ChatsList" Grid.RowSpan="3" Width="200"/>
+        <TextBox x:Name="textBox" Text="{Binding MessageTask.MessageText}" TextWrapping="Wrap" Grid.Row="2" Margin="5,5,5,5" Grid.Column="3" Height="25"/>
+        <Button x:Name="SendMessageBtn" Command="{Binding SendMessageCommand}" Grid.Column="4" Grid.Row="2" MinHeight="20" Margin="5,0,5,0" VerticalAlignment="Center" d:LayoutOverrides="TopPosition, BottomPosition">
+            <materialDesign:PackIcon Kind="Send" />
+        </Button>
+        <Button x:Name="AddFile" Click="ChooseFile" Grid.Column="2" Grid.Row="2" Margin="6,14,6,14" Width="48" HorizontalAlignment="Center" VerticalAlignment="Center">
+            <materialDesign:PackIcon Kind="Paperclip" />
+        </Button>
+        <ListBox x:Name="ChatsList" Grid.RowSpan="3" MaxWidth="250" ItemsSource="{Binding Users}" Grid.Column="1"/>
+        <TabControl  Style="{StaticResource MaterialDesignNavigatilRailTabControl}"  materialDesign:ColorZoneAssist.Mode="Standard"  materialDesign:ShadowAssist.ShadowDepth="Depth0" Grid.RowSpan="3">
+            <TabItem Header="{materialDesign:PackIcon Kind=Heart, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" />
+            <TabItem Header="{materialDesign:PackIcon Kind=Settings, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" MouseLeftButtonUp="OpenSettings" />
+        </TabControl>
+
+        <Popup Name="MyPopup"               
+               Placement="Center"
+               AllowsTransparency="True">
+            <Grid>
+                <Ellipse Width="200" Height="200" Fill="Aquamarine"/>
+            </Grid>
+        </Popup>
     </Grid>
 </Window>

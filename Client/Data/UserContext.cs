@@ -17,6 +17,7 @@ namespace Client.Data
         public UserContext(string databaseFile)
         {
             if (!string.IsNullOrEmpty(databaseFile)) dbFile = databaseFile;
+            Database.EnsureCreated();
         }
 
         public UserContext(SqliteConnection sqliteConnection)

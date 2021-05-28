@@ -17,8 +17,6 @@ namespace Client
     {
         const string App_Path = @"https://localhost:44316/api";
 
-        public User userObject { get; set; }
-
         public AuthWindow()
         {
             InitializeComponent();
@@ -55,7 +53,6 @@ namespace Client
                     using (var db = new UserContext(string.Empty))
                     {
                         var user = JsonConvert.DeserializeObject<User>(((JsonElement)deserializedResponse.Model).GetRawText());
-                        userObject = user;
 
                         if (db.Users.Find(user.Id) == null)
                             db.Users.Add(user);
@@ -76,7 +73,7 @@ namespace Client
                             token.ExpireDate = (System.DateTime)deserializedResponse.ExpireDate;
                         }
 
-                        db.SaveChanges();                        
+                        db.SaveChanges();
                     }
 
                     DialogResult = true;

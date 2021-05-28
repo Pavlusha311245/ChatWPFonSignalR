@@ -11,9 +11,9 @@ using Microsoft.IdentityModel.Tokens;
 using Server.Data;
 using Server.Hubs;
 using Server.Interfaces;
-using Server.Models;
 using Server.Providers;
 using Server.Services;
+using System.Threading.Tasks;
 
 namespace Server
 {
@@ -33,7 +33,7 @@ namespace Server
                 options.UseSqlServer(Configuration.GetConnectionString("ServerContext"));
             });
 
-            services.AddIdentity<User, IdentityRole>(options =>
+            services.AddIdentity<Models.User, IdentityRole>(options =>
             {
                 options.Password.RequireDigit = true;
                 options.Password.RequireLowercase = true;
@@ -59,7 +59,7 @@ namespace Server
 
                     ValidAudience = jwt.AUDIENCE,
                     ValidateAudience = true,
-
+                    
                     RequireExpirationTime = true,
                     IssuerSigningKey = jwt.GetSymmetricSecurityKey(),
                     ValidateIssuerSigningKey = true
@@ -74,7 +74,13 @@ namespace Server
                             (path.StartsWithSegments("/hubs/chat")))
                             context.Token = accessToken;
 
-                        return System.Threading.Tasks.Task.CompletedTask;
+                        return Task.CompletedTask;
+                    },
+                    OnTokenValidated = context =>
+                    {
+                        var user = context.Principal.Identity.Name;
+
+                        return Task.CompletedTask;
                     }
                 };
             });
@@ -85,6 +91,8 @@ namespace Server
             services.AddControllers();
             services.AddRazorPages();
 
+            services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();
+
             services.AddSignalR(options =>
             {
                 options.EnableDetailedErrors = true;
@@ -92,8 +100,6 @@ namespace Server
             });
 
             services.AddAutoMapper(typeof(Startup));
-
-            services.AddSingleton<IUserIdProvider, EmailBasedUserIdProvider>();
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)

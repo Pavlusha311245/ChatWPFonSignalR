@@ -1,5 +1,6 @@
 ﻿using Client.Commands;
 using Client.Models;
+using Client.ViewModels;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json;
@@ -7,24 +8,25 @@ using Notification.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
 using System.IO;
 using System.Media;
 using System.Net;
 using System.Threading.Tasks;
-using System.Windows.Controls;
 
 namespace Client
 {
-    class ChatViewModel : INotifyPropertyChanged
+    class ChatViewModel : ViewModelBase
     {
         HubConnection hubConnection;
         HttpWebRequest httpRequest;
 
+        public User User { get; set; }
+
         public Server.Models.Message MessageTask { get; set; }
 
-        public ObservableCollection<ListBoxItem> Users { get; set; }
+        public ObservableCollection<User> Users { get; }
         public ObservableCollection<MessageData> Messages { get; }
+        public ObservableCollection<Task> Tasks { get; }
 
         public NotificationManager NotificationManager { get; set; }
 
@@ -60,6 +62,10 @@ namespace Client
 
         public SendMessageCommand SendMessageCommand { get; }
 
+        /// <summary>
+        /// ViewModel constructor
+        /// </summary>
+        /// <param name="accessToken"></param>
         public ChatViewModel(string accessToken)
         {
             hubConnection = new HubConnectionBuilder()
@@ -82,7 +88,8 @@ namespace Client
             httpRequest.ContentType = "application/json";
 
             Messages = new ObservableCollection<MessageData>();
-            Users = new ObservableCollection<ListBoxItem>();
+            Users = new ObservableCollection<User>();
+            Tasks = new ObservableCollection<Task>();
 
             IsConnected = false;
             IsBusy = false;
@@ -91,6 +98,7 @@ namespace Client
 
             NotificationManager = new NotificationManager();
 
+            //HUB Connection commands
             hubConnection.Closed += async (error) =>
             {
                 IsConnected = false;
@@ -136,9 +144,13 @@ namespace Client
 
                 foreach (var user in users)
                 {
-                    ListBoxItem listBoxItem = new();
-                    listBoxItem.Content = user.Email;
-                    Users.Insert(0, listBoxItem);
+                    //if (!(user.Id == User.Id))
+                    //{
+                        Users.Insert(0, new User
+                        {
+                            Email = user.Email
+                        });
+                    //}
                 }
 
                 MessageTask.Task = null;
@@ -199,12 +211,6 @@ namespace Client
             {
                 IsBusy = false;
             }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        public void OnPropertyChanged(string prop)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
     }
 }

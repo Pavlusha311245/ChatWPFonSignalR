@@ -174,7 +174,7 @@ namespace Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "PersonalData",
+                name: "PersonalDatas",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -182,14 +182,14 @@ namespace Server.Migrations
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Surname = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Patronymic = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Age = table.Column<short>(type: "smallint", nullable: false),
+                    Birthday = table.Column<DateTime>(type: "datetime2", nullable: false),
                     UserID = table.Column<string>(type: "nvarchar(450)", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PersonalData", x => x.Id);
+                    table.PrimaryKey("PK_PersonalDatas", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PersonalData_AspNetUsers_UserID",
+                        name: "FK_PersonalDatas_AspNetUsers_UserID",
                         column: x => x.UserID,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
@@ -300,8 +300,8 @@ namespace Server.Migrations
                 column: "UserID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PersonalData_UserID",
-                table: "PersonalData",
+                name: "IX_PersonalDatas_UserID",
+                table: "PersonalDatas",
                 column: "UserID",
                 unique: true,
                 filter: "[UserID] IS NOT NULL");
@@ -339,7 +339,7 @@ namespace Server.Migrations
                 name: "Document");
 
             migrationBuilder.DropTable(
-                name: "PersonalData");
+                name: "PersonalDatas");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");

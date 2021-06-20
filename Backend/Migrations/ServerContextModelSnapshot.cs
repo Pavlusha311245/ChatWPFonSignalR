@@ -216,8 +216,8 @@ namespace Server.Migrations
                         .HasColumnType("int")
                         .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
 
-                    b.Property<short>("Age")
-                        .HasColumnType("smallint");
+                    b.Property<DateTime>("Birthday")
+                        .HasColumnType("datetime2");
 
                     b.Property<string>("Name")
                         .HasColumnType("nvarchar(max)");
@@ -237,7 +237,7 @@ namespace Server.Migrations
                         .IsUnique()
                         .HasFilter("[UserID] IS NOT NULL");
 
-                    b.ToTable("PersonalData");
+                    b.ToTable("PersonalDatas");
                 });
 
             modelBuilder.Entity("Server.Models.Task", b =>

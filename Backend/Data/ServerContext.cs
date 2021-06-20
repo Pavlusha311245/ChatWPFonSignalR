@@ -1,7 +1,6 @@
 ﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Server.Models;
-using Server.Seeders;
 
 namespace Server.Data
 {
@@ -9,6 +8,7 @@ namespace Server.Data
     {
         public DbSet<Task> Tasks { get; set; }
         public DbSet<Message> Messages { get; set; }
+        public DbSet<PersonalData> PersonalDatas { get; set; }
 
         public ServerContext(DbContextOptions<ServerContext> options) : base(options)
         {

@@ -1,4 +1,6 @@
-﻿namespace Server.Models
+﻿using System;
+
+namespace Server.Models
 {
     public class PersonalData
     {
@@ -6,7 +8,7 @@
         public string Name { get; set; }
         public string Surname { get; set; }
         public string Patronymic { get; set; }
-        public sbyte Age { get; set; }
+        public DateTime Birthday { get; set; }
 
         public string UserID { get; set; }
         public User User { get; set; }

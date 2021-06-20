@@ -8,7 +8,6 @@ using Microsoft.Extensions.Configuration;
 using Server.Data;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 
 namespace Server.Hubs
@@ -30,7 +29,7 @@ namespace Server.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            await Clients.All.SendAsync("Connected", $"Соединение с сервером установлено");
+            await Clients.All.SendAsync("Connected", $"Соединение с сервером установлено");            
         }
 
         private static async void SaveFile(List<Models.Document> documents)
@@ -46,7 +45,7 @@ namespace Server.Hubs
             if (message.Task != null)
                 SaveFile(message.Task.Documents);
 
-            await Clients.Client(user).SendAsync("Receive", Context.User.Identity.Name, message.MessageText);
+            await Clients.User(user).SendAsync("Receive", Context.User.Identity.Name, message.MessageText);
         }
 
         public async Task SendToEveryone(Models.Message message)
@@ -69,8 +68,8 @@ namespace Server.Hubs
 
                     SaveFile(message.Task.Documents);
                 }
-                
-                message.UserID = user.Id;                
+
+                message.UserID = user.Id;
 
                 await db.Messages.AddAsync(message);
                 await db.SaveChangesAsync();

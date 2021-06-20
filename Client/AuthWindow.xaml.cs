@@ -16,26 +16,37 @@ namespace Client
     public partial class AuthWindow : Window
     {
         const string App_Path = @"https://localhost:44316/api";
+        public string AccessToken { get; set; }
 
         public AuthWindow()
         {
             InitializeComponent();
         }
 
-        private void Login(object sender, RoutedEventArgs e)
+        /// <summary>
+        /// Login user in app
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private async void Login(object sender, RoutedEventArgs e)
         {
-            MailAddress mail;
-            if (!MailAddress.TryCreate(LoginEmailBox.Text.Trim(), out mail))
+            if (string.IsNullOrWhiteSpace(LoginEmailBox.Text))
             {
-                MessageBox.Show("Invalid email");
+                MessageBox.Show("Поле Email пустое");
                 return;
             }
 
-            if (string.IsNullOrWhiteSpace(mail.Address) || string.IsNullOrWhiteSpace(LoginPassBox.Password.Trim()))
+            if (string.IsNullOrWhiteSpace(LoginPassBox.Password))
             {
-                MessageBox.Show("Одно или несколько полей пустые");
+                MessageBox.Show("Поле Password пустое");
                 return;
-            };
+            }
+            MailAddress mail;
+            if (!MailAddress.TryCreate(LoginEmailBox.Text.Trim(), out mail))
+            {
+                MessageBox.Show("Некорректный формат Email");
+                return;
+            }
 
             var creditals = new
             {
@@ -44,37 +55,51 @@ namespace Client
             };
             using (var client = new HttpClient())
             {
-                var response = client.PostAsJsonAsync(App_Path + "/Auth/Login", creditals).Result;
+                HttpResponseMessage response = null;
+                try
+                {
+                    response = await client.PostAsJsonAsync(App_Path + "/Auth/Login", creditals);
+                }
+                catch (HttpRequestException ex)
+                {
+                    MessageBox.Show(ex.Message, ex.StatusCode.ToString());
+                    return;
+                }
 
                 var deserializedResponse = response.Content.ReadFromJsonAsync<UserManagerResponse>().Result;
 
-                if (deserializedResponse.IsSuccess)
+                if (!deserializedResponse.IsSuccess)
                 {
-                    using (var db = new UserContext(string.Empty))
+                    MessageBox.Show(deserializedResponse.Message);
+                    return;
+                }
+
+                using (var db = new UserContext(string.Empty))
+                {
+                    var user = JsonConvert.DeserializeObject<User>(((JsonElement)deserializedResponse.Model).GetRawText());
+
+                    if (db.Users.Find(user.Id) == null)
+                        db.Users.Add(user);
+
+                    var token = db.Tokens.FirstOrDefault(token => token.User == user);
+                    if (token == null)
                     {
-                        var user = JsonConvert.DeserializeObject<User>(((JsonElement)deserializedResponse.Model).GetRawText());
-
-                        if (db.Users.Find(user.Id) == null)
-                            db.Users.Add(user);
-
-                        var token = db.Tokens.FirstOrDefault(token => token.User == user);
-                        if (token == null)
+                        db.Tokens.Add(new()
                         {
-                            db.Tokens.Add(new()
-                            {
-                                Value = deserializedResponse.Message,
-                                ExpireDate = (System.DateTime)deserializedResponse.ExpireDate,
-                                UserId = user.Id
-                            });
-                        }
-                        else
-                        {
-                            token.Value = deserializedResponse.Message;
-                            token.ExpireDate = (System.DateTime)deserializedResponse.ExpireDate;
-                        }
-
-                        db.SaveChanges();
+                            Value = deserializedResponse.Message,
+                            ExpireDate = (System.DateTime)deserializedResponse.ExpireDate,
+                            UserId = user.Id
+                        });
                     }
+                    else
+                    {
+                        token.Value = deserializedResponse.Message;
+                        token.ExpireDate = (System.DateTime)deserializedResponse.ExpireDate;
+                    }
+
+                    AccessToken = token.Value;
+
+                    db.SaveChanges();
 
                     DialogResult = true;
                     Close();

@@ -59,7 +59,7 @@ namespace Server
 
                     ValidAudience = jwt.AUDIENCE,
                     ValidateAudience = true,
-                    
+
                     RequireExpirationTime = true,
                     IssuerSigningKey = jwt.GetSymmetricSecurityKey(),
                     ValidateIssuerSigningKey = true
@@ -88,7 +88,9 @@ namespace Server
             services.AddScoped<IUserService, AuthService>();
             services.AddTransient<IMailService, MailService>();
 
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson(options =>
+                    options.SerializerSettings.ReferenceLoopHandling = Newtonsoft.Json.ReferenceLoopHandling.Ignore
+            );
             services.AddRazorPages();
 
             services.AddSingleton<IUserIdProvider, CustomUserIdProvider>();

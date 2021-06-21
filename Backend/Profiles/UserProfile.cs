@@ -13,7 +13,6 @@ namespace Server.Profiles
         public UserProfile()
         {
             CreateMap<User, UserViewModel>();
-            CreateMap<PersonalData, UserViewModel>();
         }
     }
 }

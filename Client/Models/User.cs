@@ -12,5 +12,7 @@ namespace Client.Models
         public string PhoneNumber { get; set; }
 
         public Token Token { get; set; }
+
+        public List<Task> Tasks { get; set; } = new();
     }
 }

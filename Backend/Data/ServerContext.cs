@@ -9,6 +9,7 @@ namespace Server.Data
         public DbSet<Task> Tasks { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<PersonalData> PersonalDatas { get; set; }
+        public DbSet<GroupChat> GroupChats { get; set; }
 
         public ServerContext(DbContextOptions<ServerContext> options) : base(options)
         {

@@ -18,7 +18,8 @@ namespace Client
     class ChatViewModel : ViewModelBase
     {
         HubConnection hubConnection;
-        HttpWebRequest httpRequest;
+        string token;
+        public List<string> Receivers { get; set; } = new();
 
         public User User { get; set; }
 
@@ -26,7 +27,7 @@ namespace Client
 
         public ObservableCollection<User> Users { get; }
         public ObservableCollection<MessageData> Messages { get; }
-        public ObservableCollection<Task> Tasks { get; }
+        public ObservableCollection<Models.Task> Tasks { get; }
 
         public NotificationManager NotificationManager { get; set; }
 
@@ -68,10 +69,11 @@ namespace Client
         /// <param name="accessToken"></param>
         public ChatViewModel(string accessToken)
         {
+            token = accessToken;
             hubConnection = new HubConnectionBuilder()
                 .WithUrl(AppUrlString + "/chat", options =>
                 {
-                    options.AccessTokenProvider = () => Task.FromResult(accessToken);
+                    options.AccessTokenProvider = () => System.Threading.Tasks.Task.FromResult(token);
                 })
                 .ConfigureLogging(logging =>
                 {
@@ -82,19 +84,14 @@ namespace Client
                 .WithAutomaticReconnect()
                 .Build();
 
-            httpRequest = WebRequest.CreateHttp(AppUrlString + "/api/Users");
-            httpRequest.PreAuthenticate = true;
-            httpRequest.Headers.Add("Authorization", "Bearer " + accessToken);
-            httpRequest.ContentType = "application/json";
-
             Messages = new ObservableCollection<MessageData>();
             Users = new ObservableCollection<User>();
-            Tasks = new ObservableCollection<Task>();
+            Tasks = new ObservableCollection<Models.Task>();
 
             IsConnected = false;
             IsBusy = false;
 
-            SendMessageCommand = new SendMessageCommand(async o => await SendMessageToEveryOne(), o => IsConnected);
+            SendMessageCommand = new SendMessageCommand(async o => await SendToUsers(), o => IsConnected);
 
             NotificationManager = new NotificationManager();
 
@@ -102,7 +99,7 @@ namespace Client
             hubConnection.Closed += async (error) =>
             {
                 IsConnected = false;
-                await Task.Delay(3000);
+                await System.Threading.Tasks.Task.Delay(3000);
                 await Connect();
             };
 
@@ -111,8 +108,15 @@ namespace Client
                         SendDataToMessageListView(user, message);
                     });
 
-            hubConnection.On<string>("Connected", (message) =>
+            hubConnection.On<string, List<User>>("Connected", (message, users) =>
             {
+                foreach (var user in users)
+                    if (!(user.Id == User.Id))
+                        Users.Insert(0, new User
+                        {
+                            Email = user.Email
+                        });
+
                 NotificationManager.Show("Информация", message, NotificationType.Information);
                 SystemSounds.Exclamation.Play();
                 IsBusy = true;
@@ -124,7 +128,7 @@ namespace Client
         /// Executing connections to HUB
         /// </summary>
         /// <returns></returns>
-        public async Task Connect()
+        public async System.Threading.Tasks.Task Connect()
         {
             if (IsConnected)
                 return;
@@ -132,26 +136,6 @@ namespace Client
             try
             {
                 await hubConnection.StartAsync();
-
-                var response = (HttpWebResponse)(await httpRequest.GetResponseAsync());
-                var stream = response.GetResponseStream();
-
-                string jsonString;
-                using (StreamReader streamReader = new(stream))
-                    jsonString = await streamReader.ReadToEndAsync();
-
-                var users = JsonConvert.DeserializeObject<IEnumerable<User>>(jsonString);
-
-                foreach (var user in users)
-                {
-                    //if (!(user.Id == User.Id))
-                    //{
-                        Users.Insert(0, new User
-                        {
-                            Email = user.Email
-                        });
-                    //}
-                }
 
                 MessageTask.Task = null;
                 IsConnected = true;
@@ -166,7 +150,7 @@ namespace Client
         /// Executing disconnect to HUB
         /// </summary>
         /// <returns></returns>
-        public async Task Disconnect()
+        public async System.Threading.Tasks.Task Disconnect()
         {
             if (!IsConnected)
                 return;
@@ -195,13 +179,36 @@ namespace Client
         /// Sending asynchronous message to HUB 
         /// </summary>
         /// <returns></returns>
-        async Task SendMessageToEveryOne()
+        async System.Threading.Tasks.Task SendMessageToEveryOne()
         {
             try
             {
                 IsBusy = true;
                 await hubConnection.InvokeAsync("SendToEveryone", MessageTask);
                 MessageTask.Task = null;
+            }
+            catch (Exception ex)
+            {
+                SendDataToMessageListView(string.Empty, $"Критическая ошибка: {ex.Message}");
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+
+        /// <summary>
+        /// Sending asynchronous message to HUB 
+        /// </summary>
+        /// <returns></returns>
+        async System.Threading.Tasks.Task SendToUsers()
+        {
+            try
+            {
+                IsBusy = true;
+                await hubConnection.InvokeAsync("SendToUsers", MessageTask, Receivers);
+                MessageTask.Task = null;
+                Receivers.Clear();
             }
             catch (Exception ex)
             {

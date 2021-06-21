@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authentication.JwtBearer;
+﻿using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
@@ -8,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Server.Data;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace Server.Hubs
@@ -19,17 +21,47 @@ namespace Server.Hubs
         public static IWebHostEnvironment appEnv;
         public IConfiguration configuration;
         public UserManager<Models.User> userManager;
+        public RoleManager<IdentityRole> roleManager;
+        public ServerContext db;
+        public IMapper mapper;
 
-        public ChatHub(IWebHostEnvironment hostEnvironment, IConfiguration configuration, UserManager<Models.User> userManager)
+        public ChatHub(IWebHostEnvironment hostEnvironment,
+            IConfiguration configuration,
+            UserManager<Models.User> userManager,
+            RoleManager<IdentityRole> roleManager,
+            ServerContext db,
+            IMapper mapper)
         {
             appEnv = hostEnvironment;
             this.configuration = configuration;
             this.userManager = userManager;
+            this.roleManager = roleManager;
+            this.db = db;
+            this.mapper = mapper;
         }
 
         public override async Task OnConnectedAsync()
         {
-            await Clients.All.SendAsync("Connected", $"Соединение с сервером установлено");            
+            var chats = db.Users.Include(u => u.GroupChats)
+                .Where(u => u.Email == Context.UserIdentifier)
+                .FirstOrDefault()
+                .GroupChats;
+
+            foreach (var chat in chats)
+            {
+                await Groups.AddToGroupAsync(Context.ConnectionId, chat.Name);
+            }
+
+            var user = await userManager.FindByEmailAsync(Context.UserIdentifier);
+
+            await Clients.Caller.SendAsync("Connected", 
+                $"Соединение с сервером установлено",
+                db.Users.Select(user => mapper.Map<Models.User, ViewModel.UserViewModel>(user)).ToList());
+        }
+
+        public async void SendToChat(string groupname, string message)
+        {
+            await Clients.Group(groupname).SendAsync("ReceiveFromChat", message);
         }
 
         private static async void SaveFile(List<Models.Document> documents)
@@ -40,12 +72,17 @@ namespace Server.Hubs
                         await stream.WriteAsync(document.Content);
         }
 
-        public async Task SendToUser(Models.Message message, string user)
+        public async Task SendToUsers(Models.Message message, List<string> users)
         {
             if (message.Task != null)
                 SaveFile(message.Task.Documents);
 
-            await Clients.User(user).SendAsync("Receive", Context.User.Identity.Name, message.MessageText);
+            foreach (var user in users)
+            {
+                await Clients.Users(user, Context.UserIdentifier).SendAsync("Receive", Context.User.Identity.Name, message.MessageText);
+            }
+
+            users.Clear();
         }
 
         public async Task SendToEveryone(Models.Message message)

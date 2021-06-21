@@ -7,6 +7,7 @@ namespace Server.Models
     {
         public List<Message> Messages { get; set; } = new();
         public List<Task> Tasks { get; set; } = new();
+        public List<GroupChat> GroupChats { get; set; } = new();
 
         public PersonalData PersonalData { get; set; }
     }

@@ -97,7 +97,7 @@ namespace Client
                         token.ExpireDate = (System.DateTime)deserializedResponse.ExpireDate;
                     }
 
-                    AccessToken = token.Value;
+                    AccessToken = deserializedResponse.Message;
 
                     db.SaveChanges();
 

@@ -49,7 +49,7 @@ namespace Server.Controllers
 
             if (result.IsSuccess)
             {
-                await mailService.SendEmailAsync(model.Email, "New login", "<h1>Hey!, new login to your account noticed</h1><p>New login to your account at " + DateTime.Now + "</p>");
+                //await mailService.SendEmailAsync(model.Email, "New login", "<h1>Hey!, new login to your account noticed</h1><p>New login to your account at " + DateTime.Now + "</p>");
                 return Ok(result);
             }
 

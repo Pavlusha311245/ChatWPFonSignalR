@@ -2,7 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Hubs;
 using Server.Models;
 using Server.ViewModel;
 using System;
@@ -20,12 +23,17 @@ namespace Server.Controllers
         public ServerContext db;
         public IMapper mapper;
         public UserManager<User> userManager;
+        public IHubContext<ChatHub> hubContext;
 
-        public UsersController(ServerContext db, IMapper mapper, UserManager<User> userManager)
+        public UsersController(ServerContext db,
+            IMapper mapper,
+            UserManager<User> userManager,
+            IHubContext<ChatHub> hubContext)
         {
             this.db = db;
             this.mapper = mapper;
             this.userManager = userManager;
+            this.hubContext = hubContext;
         }
 
         // GET: api/<UserController>
@@ -52,10 +60,14 @@ namespace Server.Controllers
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
         {
-            
+
         }
 
-        // DELETE api/<UserController>/5
+        /// <summary>
+        /// Delete user
+        /// </summary>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(string id)
         {
@@ -72,6 +84,71 @@ namespace Server.Controllers
             }
 
             return Ok(new { Message = "User successfully deleted" });
+        }
+
+        
+        /// <summary>
+        /// This method add user to group chat
+        /// </summary>
+        /// <param name="groupname"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpPost("{id}/groups")]
+        public async Task<IActionResult> AddToGroup([FromBody] GroupChat groupname, string id)
+        {
+            var user = await userManager.FindByIdAsync(id);
+            var chatGroup = await db.GroupChats.FirstOrDefaultAsync(c => c.Name == groupname.Name);
+
+            try
+            {
+                chatGroup.Users.Add(user);
+            }
+            catch (DbUpdateException ex)
+            {
+                return BadRequest(new
+                {
+                    Message = "User already exist in chat"
+                });
+            }
+
+            await db.SaveChangesAsync();
+            await hubContext.Clients.User(user.Email).SendAsync("NotifyAddToChat", "User successfully add to chat");
+
+            return Ok(new
+            {
+                Message = $"User successfully add to chat {groupname.Name}"
+            });
+        }
+
+        /// <summary>
+        /// This method remove user from group chat
+        /// </summary>
+        /// <param name="groupname"></param>
+        /// <param name="id"></param>
+        /// <returns></returns>
+        [HttpDelete("{id}/groups")]
+        public async Task<IActionResult> RemoveFromGroup([FromBody] GroupChat groupname, string id)
+        {
+            var user = await userManager.FindByIdAsync(id);
+            var chatGroup = await db.GroupChats.Include(c => c.Users).FirstOrDefaultAsync(c => c.Name == groupname.Name);
+
+            if (chatGroup == null)
+            {
+                return NotFound(new
+                {
+                    Message = "User not found in choosed chat"
+                });
+            }
+
+            chatGroup.Users.Remove(user);
+            await hubContext.Clients.User(user.Email).SendAsync("NotifyRemoveFromChat", "User removed from chat");
+
+            await db.SaveChangesAsync();
+
+            return Ok(new
+            {
+                Message = $"User successfully removed from chat {groupname.Name}"
+            });
         }
     }
 }

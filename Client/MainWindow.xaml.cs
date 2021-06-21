@@ -4,6 +4,7 @@ using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
 using Server.Models;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -28,22 +29,22 @@ namespace Client
             Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
             InitializeComponent();
 
-            //using (db = new UserContext(string.Empty))
-            //{
-            //    user = db.Users.FirstOrDefault();
+            using (db = new UserContext(string.Empty))
+            {
+                user = db.Users.FirstOrDefault();
 
-            //    if (user == null)
-            //        this.accessToken = AuthorizationForm();
+                if (user == null)
+                    this.accessToken = AuthorizationForm();
 
-            //    accessToken = db.Tokens.FirstOrDefault(token => token.UserId == user.Id).ExpireDate < DateTime.Now ? null : db.Tokens.FirstOrDefault(token => token.UserId == user.Id).Value;
+                accessToken = db.Tokens.FirstOrDefault(token => token.UserId == user.Id).ExpireDate < DateTime.Now ? null : db.Tokens.FirstOrDefault(token => token.UserId == user.Id).Value;
 
-            //    if (accessToken == null)
-            //        this.accessToken = AuthorizationForm();
+                if (accessToken == null)
+                    this.accessToken = AuthorizationForm();
 
-            //    viewModel = new ChatViewModel(db.Tokens.FirstOrDefault(token => token.UserId == user.Id).Value);
-            //}
+                viewModel = new ChatViewModel(db.Tokens.FirstOrDefault(token => token.UserId == user.Id).Value);
+            }
 
-            viewModel = new("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJ6YXZhZHNraXkucGF2ZWwyMDAyKzNAb3V0bG9vay5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiemF2YWRza2l5LnBhdmVsMjAwMiszQG91dGxvb2suY29tIiwianRpIjoiZWM3ZmVkZmMtMDEyNS00MDA1LWJjY2ItNGVmYjA2OTQwYmY2IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiVXNlciIsIm5iZiI6MTYyMzk5NTI3MSwiZXhwIjoxNjI0NjAwMDcxLCJpc3MiOiJodHRwczovL2dna3R0ZC5ieSIsImF1ZCI6Imh0dHBzOi8vZ2drdHRkLmJ5In0.-JcwOLXxcbP9YD0ao2NwFXqTThfoWJ_qOfDCmpdsjK8");
+            //viewModel = new("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJ6YXZhZHNraXkucGF2ZWwyMDAyKzNAb3V0bG9vay5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiemF2YWRza2l5LnBhdmVsMjAwMiszQG91dGxvb2suY29tIiwianRpIjoiZWM3ZmVkZmMtMDEyNS00MDA1LWJjY2ItNGVmYjA2OTQwYmY2IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiVXNlciIsIm5iZiI6MTYyMzk5NTI3MSwiZXhwIjoxNjI0NjAwMDcxLCJpc3MiOiJodHRwczovL2dna3R0ZC5ieSIsImF1ZCI6Imh0dHBzOi8vZ2drdHRkLmJ5In0.-JcwOLXxcbP9YD0ao2NwFXqTThfoWJ_qOfDCmpdsjK8");
 
             viewModel.MessageTask = new Message();
             viewModel.User = user;
@@ -184,6 +185,14 @@ namespace Client
 
         private void ChatsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
+            var selectedUsers = ChatsList.SelectedItems;
+            foreach (var selectedUser in selectedUsers)
+            {
+                viewModel.Receivers.Add(((User)selectedUser).Email);
+            }
+
+            DataContext = viewModel;
+            
             if (SenderRow.Visibility == Visibility.Hidden)
             {
                 SenderRow.Visibility = Visibility.Visible;

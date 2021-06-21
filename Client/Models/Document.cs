@@ -1,6 +1,6 @@
 ﻿using System.ComponentModel.DataAnnotations;
 
-namespace Server.Models
+namespace Client.Models
 {
     public class Document
     {

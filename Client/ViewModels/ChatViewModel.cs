@@ -184,28 +184,6 @@ namespace Client
         /// Sending asynchronous message to HUB 
         /// </summary>
         /// <returns></returns>
-        async System.Threading.Tasks.Task SendMessageToEveryOne()
-        {
-            try
-            {
-                IsBusy = true;
-                await hubConnection.InvokeAsync("SendToEveryone", MessageTask);
-                MessageTask.Task = null;
-            }
-            catch (Exception ex)
-            {
-                SendDataToMessageListView(string.Empty, $"Критическая ошибка: {ex.Message}");
-            }
-            finally
-            {
-                IsBusy = false;
-            }
-        }
-
-        /// <summary>
-        /// Sending asynchronous message to HUB 
-        /// </summary>
-        /// <returns></returns>
         async System.Threading.Tasks.Task SendToUsers()
         {
             try

@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Server.Data;
+using Server.ViewModel;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -55,7 +56,7 @@ namespace Server.Hubs
 
             await Clients.Caller.SendAsync("Connected", 
                 $"Соединение с сервером установлено",
-                chats);
+                db.Users.Select(u => mapper.Map<Models.User, UserViewModel>(u)).ToList());
         }
 
         public async void SendToChat(string groupname, string message)

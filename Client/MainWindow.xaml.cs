@@ -13,6 +13,12 @@ using System.Windows.Controls;
 
 namespace Client
 {
+    public enum TabModals
+    {
+        Settings,
+        Logout
+    }
+
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
@@ -102,15 +108,36 @@ namespace Client
             }
         }
 
-        private void OpenSettings(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        private Grid GenerateGrid(int width, int height, int columnsCount = 1, int rowsCount = 1)
         {
             Grid grid = new();
-            grid.Width = 400;
-            grid.Height = 200;
-            grid.ColumnDefinitions.Add(new ColumnDefinition());
-            grid.ColumnDefinitions.Add(new ColumnDefinition());
-            grid.RowDefinitions.Add(new RowDefinition());
-            grid.RowDefinitions.Add(new RowDefinition());
+            grid.Width = width;
+            grid.Height = height;
+            for (int i = 0; i < columnsCount; i++)
+                grid.ColumnDefinitions.Add(new ColumnDefinition());
+            for (int i = 0; i < rowsCount; i++)
+                grid.RowDefinitions.Add(new RowDefinition());
+
+            return grid;
+        }
+
+        private TextBlock GenerateModalWindowTitle(string text)
+        {
+            TextBlock title = new()
+            {
+                Text = text,
+                VerticalAlignment = VerticalAlignment.Center,
+                Padding = new Thickness(10, 0, 0, 0),
+                FontSize = 16,
+                FontWeight = FontWeights.Bold
+            };
+
+            return title;
+        }
+
+        private void OpenSettings(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var grid = GenerateGrid(400, 200, 2, 2);
 
             grid.RowDefinitions[0].Height = new GridLength(40, GridUnitType.Pixel);
             grid.RowDefinitions[1].Height = GridLength.Auto;
@@ -130,23 +157,13 @@ namespace Client
                 VerticalAlignment = VerticalAlignment.Center,
             };
 
-            TextBlock title = new()
-            {
-                Text = "Настройки",
-                VerticalAlignment =
-                VerticalAlignment.Center,
-                Padding = new Thickness(10, 0, 0, 0),
-                FontSize = 16,
-                FontWeight = FontWeights.Bold,
-            };
+            var title = GenerateModalWindowTitle("Настройки");
 
             Grid buttonsGrid = new();
             buttonsGrid.ColumnDefinitions.Add(new ColumnDefinition());
             buttonsGrid.ColumnDefinitions.Add(new ColumnDefinition());
             buttonsGrid.RowDefinitions.Add(new RowDefinition());
             buttonsGrid.RowDefinitions.Add(new RowDefinition());
-
-
 
             //ToggleButton toggleButton = new();
             //toggleButton.IsChecked = paletteHelper.GetTheme().GetBaseTheme().Equals(new MaterialDesignDarkTheme());
@@ -192,7 +209,7 @@ namespace Client
             }
 
             DataContext = viewModel;
-            
+
             if (SenderRow.Visibility == Visibility.Hidden)
             {
                 SenderRow.Visibility = Visibility.Visible;
@@ -204,6 +221,11 @@ namespace Client
         private void SendMessage(object sender, RoutedEventArgs e)
         {
             MessageTextBox.Text = string.Empty;
+        }
+
+        private void Logout(object sender, System.Windows.Input.MouseButtonEventArgs e)
+        {
+            var grid = GenerateGrid(200, 100, 2, 2);
         }
     }
 }

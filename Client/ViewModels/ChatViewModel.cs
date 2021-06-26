@@ -117,6 +117,11 @@ namespace Client
                             Email = user.Email
                         });
 
+                Users.CollectionChanged += (sender, e) =>
+                {
+                    hubConnection.InvokeAsync("GetAllMessages", null);
+                };
+
                 NotificationManager.Show("Информация", message, NotificationType.Information);
                 SystemSounds.Exclamation.Play();
                 IsBusy = true;

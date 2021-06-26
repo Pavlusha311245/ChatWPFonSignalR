@@ -207,7 +207,7 @@
         <TabControl  Style="{StaticResource MaterialDesignNavigatilRailTabControl}"  materialDesign:ColorZoneAssist.Mode="PrimaryMid"  materialDesign:ShadowAssist.ShadowDepth="Depth0" Grid.RowSpan="3">
             <TabItem Header="{materialDesign:PackIcon Kind=AccountCircleOutline, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" />
             <TabItem Header="{materialDesign:PackIcon Kind=Settings, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" MouseLeftButtonUp="OpenSettings" />
-            <TabItem Header="{materialDesign:PackIcon Kind=ExitToApp, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0"/>
+            <TabItem Header="{materialDesign:PackIcon Kind=ExitToApp, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" MouseLeftButtonUp="Logout"/>
         </TabControl>
     </Grid>
 </Window>

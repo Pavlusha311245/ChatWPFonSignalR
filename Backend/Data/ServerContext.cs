@@ -8,8 +8,8 @@ namespace Server.Data
     {
         public DbSet<Task> Tasks { get; set; }
         public DbSet<Message> Messages { get; set; }
-        public DbSet<PersonalData> PersonalDatas { get; set; }
-        public DbSet<GroupChat> GroupChats { get; set; }
+        public DbSet<UserProfile> UserProfiles { get; set; }
+        public DbSet<Chat> Chats { get; set; }
 
         public ServerContext(DbContextOptions<ServerContext> options) : base(options)
         {
@@ -17,6 +17,33 @@ namespace Server.Data
             {
                 Database.Migrate();
             }
+        }
+
+        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        {
+            optionsBuilder.UseLazyLoadingProxies();
+
+            base.OnConfiguring(optionsBuilder);
+        }
+
+        protected override void OnModelCreating(ModelBuilder builder)
+        {
+            builder
+                .Entity<Chat>()
+                .HasMany(c => c.Users)
+                .WithMany(u => u.Chats)
+                .UsingEntity<ChatUsers>(
+                   j => j
+                    .HasOne(cu => cu.User)
+                    .WithMany(u => u.ChatUsers)
+                    .HasForeignKey(u => u.UserID),
+                j => j
+                    .HasOne(cu => cu.Chat)
+                    .WithMany(u => u.ChatUsers)
+                    .HasForeignKey(c => c.ChatID)
+            );
+
+            base.OnModelCreating(builder);
         }
     }
 }

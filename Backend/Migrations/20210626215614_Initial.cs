@@ -47,6 +47,36 @@ namespace Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Chats",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Image = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    TimeStamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Chats", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Document",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    SavePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Extension = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Hash = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Content = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
+                    TimeStamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Document", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -153,28 +183,7 @@ namespace Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Messages",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    MessageText = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: true),
-                    Timestamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Messages", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Messages_AspNetUsers_UserID",
-                        column: x => x.UserID,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "PersonalDatas",
+                name: "UserProfiles",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
@@ -187,9 +196,9 @@ namespace Server.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_PersonalDatas", x => x.Id);
+                    table.PrimaryKey("PK_UserProfiles", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_PersonalDatas_AspNetUsers_UserID",
+                        name: "FK_UserProfiles_AspNetUsers_UserID",
                         column: x => x.UserID,
                         principalTable: "AspNetUsers",
                         principalColumn: "Id",
@@ -197,27 +206,78 @@ namespace Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ChatUser",
+                columns: table => new
+                {
+                    ChatID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UserID = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Role = table.Column<int>(type: "int", nullable: false, defaultValue: 0)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ChatUser", x => new { x.UserID, x.ChatID });
+                    table.ForeignKey(
+                        name: "FK_ChatUser_AspNetUsers_UserID",
+                        column: x => x.UserID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ChatUser_Chats_ChatID",
+                        column: x => x.ChatID,
+                        principalTable: "Chats",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Messages",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    MessageText = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    SenderID = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    ReceiverID = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    ChatID = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    Timestamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Messages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_Messages_AspNetUsers_ReceiverID",
+                        column: x => x.ReceiverID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Messages_AspNetUsers_SenderID",
+                        column: x => x.SenderID,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Restrict);
+                    table.ForeignKey(
+                        name: "FK_Messages_Chats_ChatID",
+                        column: x => x.ChatID,
+                        principalTable: "Chats",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Tasks",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Id = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Remark = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     DeadLine = table.Column<DateTime>(type: "datetime2", nullable: false),
                     Done = table.Column<bool>(type: "bit", nullable: false),
-                    MessageId = table.Column<int>(type: "int", nullable: false),
-                    UserId = table.Column<string>(type: "nvarchar(450)", nullable: true),
+                    MessageId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Timestamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true)
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Tasks", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Tasks_AspNetUsers_UserId",
-                        column: x => x.UserId,
-                        principalTable: "AspNetUsers",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
                     table.ForeignKey(
                         name: "FK_Tasks_Messages_MessageId",
                         column: x => x.MessageId,
@@ -227,27 +287,51 @@ namespace Server.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Document",
+                name: "DocumentTask",
                 columns: table => new
                 {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    SavePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Extension = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Hash = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Content = table.Column<byte[]>(type: "varbinary(max)", nullable: true),
-                    TimeStamp = table.Column<byte[]>(type: "rowversion", rowVersion: true, nullable: true),
-                    TaskId = table.Column<int>(type: "int", nullable: true)
+                    DocumentsId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    TasksId = table.Column<Guid>(type: "uniqueidentifier", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Document", x => x.Id);
+                    table.PrimaryKey("PK_DocumentTask", x => new { x.DocumentsId, x.TasksId });
                     table.ForeignKey(
-                        name: "FK_Document_Tasks_TaskId",
-                        column: x => x.TaskId,
+                        name: "FK_DocumentTask_Document_DocumentsId",
+                        column: x => x.DocumentsId,
+                        principalTable: "Document",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_DocumentTask_Tasks_TasksId",
+                        column: x => x.TasksId,
                         principalTable: "Tasks",
                         principalColumn: "Id",
-                        onDelete: ReferentialAction.Restrict);
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "TaskUser",
+                columns: table => new
+                {
+                    TasksId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
+                    UsersId = table.Column<string>(type: "nvarchar(450)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_TaskUser", x => new { x.TasksId, x.UsersId });
+                    table.ForeignKey(
+                        name: "FK_TaskUser_AspNetUsers_UsersId",
+                        column: x => x.UsersId,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_TaskUser_Tasks_TasksId",
+                        column: x => x.TasksId,
+                        principalTable: "Tasks",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
@@ -290,32 +374,46 @@ namespace Server.Migrations
                 filter: "[NormalizedUserName] IS NOT NULL");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Document_TaskId",
-                table: "Document",
-                column: "TaskId");
+                name: "IX_ChatUser_ChatID",
+                table: "ChatUser",
+                column: "ChatID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Messages_UserID",
+                name: "IX_DocumentTask_TasksId",
+                table: "DocumentTask",
+                column: "TasksId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Messages_ChatID",
                 table: "Messages",
-                column: "UserID");
+                column: "ChatID");
 
             migrationBuilder.CreateIndex(
-                name: "IX_PersonalDatas_UserID",
-                table: "PersonalDatas",
-                column: "UserID",
-                unique: true,
-                filter: "[UserID] IS NOT NULL");
+                name: "IX_Messages_ReceiverID",
+                table: "Messages",
+                column: "ReceiverID");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Messages_SenderID",
+                table: "Messages",
+                column: "SenderID");
 
             migrationBuilder.CreateIndex(
                 name: "IX_Tasks_MessageId",
                 table: "Tasks",
-                column: "MessageId",
-                unique: true);
+                column: "MessageId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_Tasks_UserId",
-                table: "Tasks",
-                column: "UserId");
+                name: "IX_TaskUser_UsersId",
+                table: "TaskUser",
+                column: "UsersId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_UserProfiles_UserID",
+                table: "UserProfiles",
+                column: "UserID",
+                unique: true,
+                filter: "[UserID] IS NOT NULL");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
@@ -336,13 +434,22 @@ namespace Server.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
-                name: "Document");
+                name: "ChatUser");
 
             migrationBuilder.DropTable(
-                name: "PersonalDatas");
+                name: "DocumentTask");
+
+            migrationBuilder.DropTable(
+                name: "TaskUser");
+
+            migrationBuilder.DropTable(
+                name: "UserProfiles");
 
             migrationBuilder.DropTable(
                 name: "AspNetRoles");
+
+            migrationBuilder.DropTable(
+                name: "Document");
 
             migrationBuilder.DropTable(
                 name: "Tasks");
@@ -352,6 +459,9 @@ namespace Server.Migrations
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");
+
+            migrationBuilder.DropTable(
+                name: "Chats");
         }
     }
 }

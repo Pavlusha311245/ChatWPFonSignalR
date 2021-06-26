@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Configuration;
 using Server.Interfaces;
 using Server.Models;
@@ -31,6 +32,14 @@ namespace Server.Controllers
         {
             if (!ModelState.IsValid)
                 return BadRequest("Some properties are not valid");
+
+            IFormFile avatar = model.Avatar;
+
+            using (var fileStream  = avatar.OpenReadStream())
+            {
+                model.avatarByteArray = new byte[fileStream.Length];
+                fileStream.Read(model.avatarByteArray, 0, (int)fileStream.Length);
+            }
 
             var result = await userService.RegisterUserAsync(model);
             if (result.IsSuccess)

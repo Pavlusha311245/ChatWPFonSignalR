@@ -42,21 +42,20 @@ namespace Server.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var chats = db.Users.Include(u => u.GroupChats)
-                .Where(u => u.Email == Context.UserIdentifier)
-                .FirstOrDefault()
-                .GroupChats;
+            var user = await userManager.FindByEmailAsync(Context.UserIdentifier);
+            var chats = user.Chats;
 
             foreach (var chat in chats)
             {
-                await Groups.AddToGroupAsync(Context.ConnectionId, chat.Name);
+                if (chat.Type == Models.ChatTypes.Group)
+                {
+                    await Groups.AddToGroupAsync(Context.ConnectionId, chat.Name);
+                }
             }
-
-            var user = await userManager.FindByEmailAsync(Context.UserIdentifier);
 
             await Clients.Caller.SendAsync("Connected", 
                 $"Соединение с сервером установлено",
-                db.Users.Select(user => mapper.Map<Models.User, ViewModel.UserViewModel>(user)).ToList());
+                chats);
         }
 
         public async void SendToChat(string groupname, string message)
@@ -74,8 +73,8 @@ namespace Server.Hubs
 
         public async Task SendToUsers(Models.Message message, List<string> users)
         {
-            if (message.Task != null)
-                SaveFile(message.Task.Documents);
+            //if (message.Task != null)
+            //    SaveFile(message.Task.Documents);
 
             foreach (var user in users)
             {
@@ -96,17 +95,17 @@ namespace Server.Hubs
             {
                 var user = await userManager.FindByEmailAsync(Context.UserIdentifier);
 
-                if (message.Task != null)
-                {
-                    message.Task.UserId = user.Id;
+                //if (message.Task != null)
+                //{
+                //    //message.Task.UserId = user.Id;
 
-                    foreach (var document in message.Task.Documents)
-                        document.SavePath = "/Resources/Files/" + document.Hash + document.Extension;
+                //    foreach (var document in message.Task.Documents)
+                //        document.SavePath = "/Resources/Files/" + document.Hash + document.Extension;
 
-                    SaveFile(message.Task.Documents);
-                }
+                //    SaveFile(message.Task.Documents);
+                //}
 
-                message.UserID = user.Id;
+                message.SenderID = user.Id;
 
                 await db.Messages.AddAsync(message);
                 await db.SaveChangesAsync();

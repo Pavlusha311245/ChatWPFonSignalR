@@ -1,4 +1,5 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.EntityFrameworkCore;
@@ -184,13 +185,23 @@ namespace Server.Services
                     Errors = result.Errors.Select(e => e.Description)
                 };
 
-            var personalData = new PersonalData
+            var profile = new UserProfile
             {
                 Name = model.Name,
                 Surname = model.Surname,
                 Patronymic = model.Patronymic,
                 Birthday = model.Birthday,
                 UserID = user.Id
+            };
+
+            var usersList = new List<User>();
+            usersList.Add(user);
+
+            var chat = new Chat
+            {
+                Name = profile.Surname + " " + profile.Name[0] + "." + profile.Surname[0] + ".",
+                Image = model.avatarByteArray,
+                Type = ChatTypes.Single,
             };
 
             DbContextOptionsBuilder<ServerContext> optionsBuilder = new();
@@ -200,7 +211,9 @@ namespace Server.Services
 
             using (var db = new ServerContext(options))
             {
-                await db.PersonalDatas.AddAsync(personalData);
+                await db.Chats.AddAsync(chat);
+                user.ChatUsers.Add(new ChatUsers { Chat = chat, User = user });
+                await db.UserProfiles.AddAsync(profile);
                 await db.SaveChangesAsync();
             }
 

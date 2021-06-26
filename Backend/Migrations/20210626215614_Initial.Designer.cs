@@ -10,7 +10,7 @@ using Server.Data;
 namespace Server.Migrations
 {
     [DbContext(typeof(ServerContext))]
-    [Migration("20210613173432_Initial")]
+    [Migration("20210626215614_Initial")]
     partial class Initial
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -18,8 +18,23 @@ namespace Server.Migrations
 #pragma warning disable 612, 618
             modelBuilder
                 .HasAnnotation("Relational:MaxIdentifierLength", 128)
-                .HasAnnotation("ProductVersion", "5.0.6")
+                .HasAnnotation("ProductVersion", "5.0.7")
                 .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+            modelBuilder.Entity("DocumentTask", b =>
+                {
+                    b.Property<Guid>("DocumentsId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TasksId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("DocumentsId", "TasksId");
+
+                    b.HasIndex("TasksId");
+
+                    b.ToTable("DocumentTask");
+                });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
                 {
@@ -152,12 +167,53 @@ namespace Server.Migrations
                     b.ToTable("AspNetUserTokens");
                 });
 
-            modelBuilder.Entity("Server.Models.Document", b =>
+            modelBuilder.Entity("Server.Models.Chat", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<byte[]>("Image")
+                        .HasColumnType("varbinary(max)");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<byte[]>("TimeStamp")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("rowversion");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Chats");
+                });
+
+            modelBuilder.Entity("Server.Models.ChatUsers", b =>
+                {
+                    b.Property<string>("UserID")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<Guid>("ChatID")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Role")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasDefaultValue(0);
+
+                    b.HasKey("UserID", "ChatID");
+
+                    b.HasIndex("ChatID");
+
+                    b.ToTable("ChatUser");
+                });
+
+            modelBuilder.Entity("Server.Models.Document", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<byte[]>("Content")
                         .HasColumnType("varbinary(max)");
@@ -171,9 +227,6 @@ namespace Server.Migrations
                     b.Property<string>("SavePath")
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<int?>("TaskId")
-                        .HasColumnType("int");
-
                     b.Property<byte[]>("TimeStamp")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -181,73 +234,48 @@ namespace Server.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("TaskId");
-
                     b.ToTable("Document");
                 });
 
             modelBuilder.Entity("Server.Models.Message", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("ChatID")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("MessageText")
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ReceiverID")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.Property<string>("SenderID")
+                        .HasColumnType("nvarchar(450)");
 
                     b.Property<byte[]>("Timestamp")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("UserID")
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("UserID");
+                    b.HasIndex("ChatID");
+
+                    b.HasIndex("ReceiverID");
+
+                    b.HasIndex("SenderID");
 
                     b.ToTable("Messages");
                 });
 
-            modelBuilder.Entity("Server.Models.PersonalData", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
-
-                    b.Property<DateTime>("Birthday")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("Name")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Patronymic")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Surname")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("UserID")
-                        .HasColumnType("nvarchar(450)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserID")
-                        .IsUnique()
-                        .HasFilter("[UserID] IS NOT NULL");
-
-                    b.ToTable("PersonalDatas");
-                });
-
             modelBuilder.Entity("Server.Models.Task", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<DateTime>("DeadLine")
                         .HasColumnType("datetime2");
@@ -255,8 +283,8 @@ namespace Server.Migrations
                     b.Property<bool>("Done")
                         .HasColumnType("bit");
 
-                    b.Property<int>("MessageId")
-                        .HasColumnType("int");
+                    b.Property<Guid>("MessageId")
+                        .HasColumnType("uniqueidentifier");
 
                     b.Property<string>("Remark")
                         .HasColumnType("nvarchar(max)");
@@ -266,15 +294,9 @@ namespace Server.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("rowversion");
 
-                    b.Property<string>("UserId")
-                        .HasColumnType("nvarchar(450)");
-
                     b.HasKey("Id");
 
-                    b.HasIndex("MessageId")
-                        .IsUnique();
-
-                    b.HasIndex("UserId");
+                    b.HasIndex("MessageId");
 
                     b.ToTable("Tasks");
                 });
@@ -344,6 +366,67 @@ namespace Server.Migrations
                     b.ToTable("AspNetUsers");
                 });
 
+            modelBuilder.Entity("Server.Models.UserProfile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int")
+                        .HasAnnotation("SqlServer:ValueGenerationStrategy", SqlServerValueGenerationStrategy.IdentityColumn);
+
+                    b.Property<DateTime>("Birthday")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Patronymic")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("Surname")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserID")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserID")
+                        .IsUnique()
+                        .HasFilter("[UserID] IS NOT NULL");
+
+                    b.ToTable("UserProfiles");
+                });
+
+            modelBuilder.Entity("TaskUser", b =>
+                {
+                    b.Property<Guid>("TasksId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("UsersId")
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("TasksId", "UsersId");
+
+                    b.HasIndex("UsersId");
+
+                    b.ToTable("TaskUser");
+                });
+
+            modelBuilder.Entity("DocumentTask", b =>
+                {
+                    b.HasOne("Server.Models.Document", null)
+                        .WithMany()
+                        .HasForeignKey("DocumentsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Server.Models.Task", null)
+                        .WithMany()
+                        .HasForeignKey("TasksId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -395,65 +478,95 @@ namespace Server.Migrations
                         .IsRequired();
                 });
 
-            modelBuilder.Entity("Server.Models.Document", b =>
+            modelBuilder.Entity("Server.Models.ChatUsers", b =>
                 {
-                    b.HasOne("Server.Models.Task", null)
-                        .WithMany("Documents")
-                        .HasForeignKey("TaskId");
+                    b.HasOne("Server.Models.Chat", "Chat")
+                        .WithMany("ChatUsers")
+                        .HasForeignKey("ChatID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Server.Models.User", "User")
+                        .WithMany("ChatUsers")
+                        .HasForeignKey("UserID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Chat");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("Server.Models.Message", b =>
                 {
-                    b.HasOne("Server.Models.User", "User")
+                    b.HasOne("Server.Models.Chat", "Chat")
                         .WithMany("Messages")
-                        .HasForeignKey("UserID");
+                        .HasForeignKey("ChatID")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
-                    b.Navigation("User");
-                });
+                    b.HasOne("Server.Models.User", "Receiver")
+                        .WithMany()
+                        .HasForeignKey("ReceiverID");
 
-            modelBuilder.Entity("Server.Models.PersonalData", b =>
-                {
-                    b.HasOne("Server.Models.User", "User")
-                        .WithOne("PersonalData")
-                        .HasForeignKey("Server.Models.PersonalData", "UserID");
+                    b.HasOne("Server.Models.User", "Sender")
+                        .WithMany()
+                        .HasForeignKey("SenderID");
 
-                    b.Navigation("User");
+                    b.Navigation("Chat");
+
+                    b.Navigation("Receiver");
+
+                    b.Navigation("Sender");
                 });
 
             modelBuilder.Entity("Server.Models.Task", b =>
                 {
                     b.HasOne("Server.Models.Message", "Message")
-                        .WithOne("Task")
-                        .HasForeignKey("Server.Models.Task", "MessageId")
+                        .WithMany()
+                        .HasForeignKey("MessageId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("Server.Models.User", "User")
-                        .WithMany("Tasks")
-                        .HasForeignKey("UserId");
-
                     b.Navigation("Message");
+                });
+
+            modelBuilder.Entity("Server.Models.UserProfile", b =>
+                {
+                    b.HasOne("Server.Models.User", "User")
+                        .WithOne("UserProfile")
+                        .HasForeignKey("Server.Models.UserProfile", "UserID");
 
                     b.Navigation("User");
                 });
 
-            modelBuilder.Entity("Server.Models.Message", b =>
+            modelBuilder.Entity("TaskUser", b =>
                 {
-                    b.Navigation("Task");
+                    b.HasOne("Server.Models.Task", null)
+                        .WithMany()
+                        .HasForeignKey("TasksId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Server.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("UsersId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
-            modelBuilder.Entity("Server.Models.Task", b =>
+            modelBuilder.Entity("Server.Models.Chat", b =>
                 {
-                    b.Navigation("Documents");
+                    b.Navigation("ChatUsers");
+
+                    b.Navigation("Messages");
                 });
 
             modelBuilder.Entity("Server.Models.User", b =>
                 {
-                    b.Navigation("Messages");
+                    b.Navigation("ChatUsers");
 
-                    b.Navigation("PersonalData");
-
-                    b.Navigation("Tasks");
+                    b.Navigation("UserProfile");
                 });
 #pragma warning restore 612, 618
         }

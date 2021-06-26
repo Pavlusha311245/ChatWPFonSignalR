@@ -2,7 +2,7 @@
 
 namespace Server.Models
 {
-    public class PersonalData
+    public class UserProfile
     {
         public int Id { get; set; }
         public string Name { get; set; }
@@ -11,6 +11,6 @@ namespace Server.Models
         public DateTime Birthday { get; set; }
 
         public string UserID { get; set; }
-        public User User { get; set; }
+        public virtual User User { get; set; }
     }
 }

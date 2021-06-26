@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Microsoft.AspNetCore.Http;
+using System;
 using System.ComponentModel.DataAnnotations;
 
 namespace Server.Models
@@ -29,5 +30,11 @@ namespace Server.Models
 
         [Required(ErrorMessage = "Age is required")]
         public DateTime Birthday { get; set; }
+
+        [Required(ErrorMessage = "Avatar is required")]
+        public IFormFile Avatar { get; set; }
+
+        [NonSerialized]
+        public byte[] avatarByteArray;
     }
 }

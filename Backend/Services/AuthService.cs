@@ -130,7 +130,7 @@ namespace Server.Services
             {
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimsIdentity.DefaultNameClaimType, user.UserName),
-                new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
             };
 
             foreach (var userRole in userRoles)
@@ -194,16 +194,6 @@ namespace Server.Services
                 UserID = user.Id
             };
 
-            var usersList = new List<User>();
-            usersList.Add(user);
-
-            var chat = new Chat
-            {
-                Name = profile.Surname + " " + profile.Name[0] + "." + profile.Surname[0] + ".",
-                Image = model.avatarByteArray,
-                Type = ChatTypes.Single,
-            };
-
             DbContextOptionsBuilder<ServerContext> optionsBuilder = new();
             var options = optionsBuilder
                 .UseSqlServer(configuration.GetConnectionString("ServerContext"))
@@ -211,8 +201,20 @@ namespace Server.Services
 
             using (var db = new ServerContext(options))
             {
-                await db.Chats.AddAsync(chat);
-                user.ChatUsers.Add(new ChatUsers { Chat = chat, User = user });
+                var chat = new Chat
+                {
+                    Name = profile.Surname + " " + profile.Name[0] + "." + profile.Surname[0] + ".",
+                    Image = model.avatarByteArray,
+                    Type = ChatTypes.Single,
+                };
+
+                db.Chats.Add(chat);
+                user.ChatUsers.Add(new ChatUsers
+                {
+                    Chat = chat,
+                    User = user,
+                    Role = ChatRoles.Owner
+                });
                 await db.UserProfiles.AddAsync(profile);
                 await db.SaveChangesAsync();
             }

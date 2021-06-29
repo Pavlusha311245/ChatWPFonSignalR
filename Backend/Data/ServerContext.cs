@@ -41,6 +41,12 @@ namespace Server.Data
                     .HasOne(cu => cu.Chat)
                     .WithMany(u => u.ChatUsers)
                     .HasForeignKey(c => c.ChatID)
+                    , j =>
+                    {
+                        j.Property(cu => cu.Role).HasDefaultValue(ChatRoles.User);
+                        j.HasKey(cu => new { cu.ChatID, cu.UserID });
+                        j.ToTable("ChatUser");
+                    }
             );
 
             base.OnModelCreating(builder);

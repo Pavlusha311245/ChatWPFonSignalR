@@ -6,13 +6,6 @@ using System.Threading.Tasks;
 
 namespace Server.Models
 {
-    public enum ChatRoles
-    {
-        User,
-        Moderator,
-        Admin
-    }
-
     public enum ChatTypes
     {
         Single,
@@ -23,9 +16,10 @@ namespace Server.Models
     {
         public Guid Id { get; set; }
         public byte[] Image { get; set; }
+        [Required]
         public string Name { get; set; }
+        [Required]
         public ChatTypes Type { get; set; }
-        public ChatRoles Role { get; set; }
 
         public virtual List<Message> Messages { get; set; } = new();
         public virtual List<User> Users { get; set; } = new();

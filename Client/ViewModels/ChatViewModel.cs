@@ -3,15 +3,11 @@ using Client.Models;
 using Client.ViewModels;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Notification.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Media;
-using System.Net;
-using System.Threading.Tasks;
 
 namespace Client
 {
@@ -19,19 +15,33 @@ namespace Client
     {
         HubConnection hubConnection;
         string token;
-        public List<string> Receivers { get; set; } = new();
-
+        public Chat ReceivingChat { get; set; }
         public User User { get; set; }
 
         public Server.Models.Message MessageTask { get; set; }
 
-        public ObservableCollection<User> Users { get; }
+        public ObservableCollection<Chat> Chats { get; }
         public ObservableCollection<MessageData> Messages { get; }
         public ObservableCollection<Models.Task> Tasks { get; }
 
         public NotificationManager NotificationManager { get; set; }
 
         public string AppUrlString { get; set; } = @"https://localhost:44316";
+
+        System.Windows.Visibility isAdmin;
+
+        public System.Windows.Visibility IsAdmin
+        {
+            get => isAdmin;
+            set
+            {
+                if (isAdmin != value)
+                {
+                    isAdmin = value;
+                    OnPropertyChanged("IsAdmin");
+                }
+            }
+        }
 
         bool isBusy;
         public bool IsBusy
@@ -85,11 +95,12 @@ namespace Client
                 .Build();
 
             Messages = new ObservableCollection<MessageData>();
-            Users = new ObservableCollection<User>();
+            Chats = new ObservableCollection<Chat>();
             Tasks = new ObservableCollection<Models.Task>();
 
             IsConnected = false;
             IsBusy = false;
+            IsAdmin = System.Windows.Visibility.Hidden;
 
             SendMessageCommand = new SendMessageCommand(async o => await SendToUsers(), o => IsConnected);
 
@@ -108,21 +119,25 @@ namespace Client
                         SendDataToMessageListView(user, message);
                     });
 
-            hubConnection.On<string, List<User>>("Connected", (message, users) =>
+            hubConnection.On("AdminPrivileges", () =>
             {
-                foreach (var user in users)
-                    if (!(user.Id == User.Id))
-                        Users.Insert(0, new User
-                        {
-                            Email = user.Email
-                        });
+                IsAdmin = System.Windows.Visibility.Visible;
+            });
 
-                Users.CollectionChanged += (sender, e) =>
+            hubConnection.On<List<Task>, List<Chat>>("Connected", (tasks, chats) =>
+            {
+                foreach (var chat in chats)
+                    if (!Chats.Contains(chat))
+                    {
+                        Chats.Insert(0, chat);
+                    }
+
+                foreach (var task in tasks)
                 {
-                    hubConnection.InvokeAsync("GetAllMessages", null);
-                };
+                    Tasks.Insert(0, task);
+                }
 
-                NotificationManager.Show("Информация", message, NotificationType.Information);
+                NotificationManager.Show("Информация", "Соединение с сервером установлено", NotificationType.Information);
                 SystemSounds.Exclamation.Play();
                 IsBusy = true;
                 IsConnected = true;
@@ -189,9 +204,8 @@ namespace Client
             try
             {
                 IsBusy = true;
-                await hubConnection.InvokeAsync("SendToUsers", MessageTask, Receivers);
+                await hubConnection.InvokeAsync("SendMessage", ReceivingChat.Id, MessageTask.MessageText);
                 MessageTask.Task = null;
-                Receivers.Clear();
             }
             catch (Exception ex)
             {

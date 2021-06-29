@@ -24,8 +24,11 @@
             <ColumnDefinition/>
         </Grid.ColumnDefinitions>
 
-        <!--Settings modal-->
+        <!--Modals-->
         <materialDesign:DialogHost Identifier="settings" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Grid.RowSpan="3"/>
+        <materialDesign:DialogHost Identifier="exit" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Grid.RowSpan="3"/>
+        <materialDesign:DialogHost Identifier="profile" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Grid.RowSpan="3"/>
+        <materialDesign:DialogHost Identifier="newTask" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Grid.RowSpan="3"/>
 
         <!--Start message before select chat-->
         <Grid Grid.Column="2" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="UserChoisPrompt">
@@ -68,7 +71,7 @@
         </ListView>
 
         <!--Chat list-->
-        <ListBox x:Name="ChatsList" Grid.RowSpan="3" Style="{StaticResource MaterialDesignListBox}" MaxWidth="250" ItemsSource="{Binding Users}" Grid.Column="1" SelectionChanged="ChatsList_SelectionChanged" Background="#FFEBEBEB" BorderThickness="0,0,1,0" BorderBrush="Silver">
+        <ListBox x:Name="ChatsList" Grid.RowSpan="3" Style="{StaticResource MaterialDesignListBox}" MaxWidth="250" ItemsSource="{Binding Chats}" Grid.Column="1" SelectionChanged="ChatsList_SelectionChanged" Background="#FFEBEBEB" BorderThickness="0,0,1,0" BorderBrush="Silver">
             <ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid x:Name="UserCardGrid">
@@ -80,13 +83,13 @@
                             <RowDefinition Height="50"/>
                         </Grid.RowDefinitions>
 
-                        <Image Source="logo.jpg" Width="50" Height="50" Grid.Column="0" Grid.ColumnSpan="1">
+                        <Image Source="{Binding Image}" Width="50" Height="50" Grid.Column="0" Grid.ColumnSpan="1">
                             <Image.Clip>
                                 <EllipseGeometry RadiusX="25" RadiusY="25" Center="25,25"/>
                             </Image.Clip>
                         </Image>
 
-                        <Grid x:Name="UserCardDataGrid" Grid.Column="1" Margin="5,5,5,5">
+                        <Grid x:Name="ChatCardDataGrid" Grid.Column="1" Margin="5,5,5,5">
                             <Grid.ColumnDefinitions>
                                 <ColumnDefinition/>
                             </Grid.ColumnDefinitions>
@@ -95,8 +98,8 @@
                                 <RowDefinition/>
                             </Grid.RowDefinitions>
 
-                            <TextBlock Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="0" Text="{Binding Email}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="1" Text="{Binding Email}" FontSize="9" VerticalAlignment="Bottom"/>
+                            <TextBlock Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="0" Text="{Binding Name}" VerticalAlignment="Center"/>
+                            <TextBlock Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="1" Text="{Binding Type}" FontSize="9" VerticalAlignment="Bottom"/>
                         </Grid>
                     </Grid>
                 </DataTemplate>
@@ -104,7 +107,7 @@
         </ListBox>
 
         <!--Sender row-->
-        <Grid x:Name="SenderRow" Grid.Row="2" Grid.Column="2" Visibility="Hidden">
+        <Grid x:Name="SenderRow" Grid.Row="2" Grid.Column="2" Visibility="Visible">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="65"/>
                 <ColumnDefinition/>
@@ -118,7 +121,8 @@
 
             <TextBox x:Name="MessageTextBox" Text="{Binding MessageTask.MessageText}" TextWrapping="Wrap" Margin="0,15,0,15" Grid.Column="1" Padding="0,0,0,2" FontSize="14" VerticalContentAlignment="Bottom"/>
 
-            <Button x:Name="AddFile" Click="ChooseFile" Command="{x:Static materialDesign:DialogHost.OpenDialogCommand}" Opacity="1" Cursor="Hand" IsDefault="True" Padding="0,0,0,0" Margin="0,0,0,13" HorizontalContentAlignment="Center" Background="{x:Null}" Foreground="#FF673AB7" BorderThickness="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+            <!--add visibility Visibility="{Binding IsAdmin}" -->
+            <Button x:Name="AddFile"  Click="ChooseFile" Opacity="1" Cursor="Hand" IsDefault="True" Padding="0,0,0,0" Margin="0,0,0,13" HorizontalContentAlignment="Center" Background="{x:Null}" Foreground="#FF673AB7" BorderThickness="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Bottom">
                 <materialDesign:PackIcon Kind="Paperclip" Width="30" Height="30" />
             </Button>
 
@@ -206,8 +210,8 @@
 
         <TabControl  Style="{StaticResource MaterialDesignNavigatilRailTabControl}"  materialDesign:ColorZoneAssist.Mode="PrimaryMid"  materialDesign:ShadowAssist.ShadowDepth="Depth0" Grid.RowSpan="3">
             <TabItem Header="{materialDesign:PackIcon Kind=AccountCircleOutline, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" />
-            <TabItem Header="{materialDesign:PackIcon Kind=Settings, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" MouseLeftButtonUp="OpenSettings" />
-            <TabItem Header="{materialDesign:PackIcon Kind=ExitToApp, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" MouseLeftButtonUp="Logout"/>
+            <TabItem Tag="settings"  Header="{materialDesign:PackIcon Kind=Settings, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" MouseLeftButtonUp="OpenSettings" />
+            <TabItem Tag="exit" Header="{materialDesign:PackIcon Kind=ExitToApp, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" MouseLeftButtonUp="Logout"/>
         </TabControl>
     </Grid>
 </Window>

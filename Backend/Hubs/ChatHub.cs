@@ -4,10 +4,10 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.SignalR;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Server.Data;
 using Server.ViewModel;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -43,9 +43,12 @@ namespace Server.Hubs
 
         public override async Task OnConnectedAsync()
         {
-            var user = await userManager.FindByEmailAsync(Context.UserIdentifier);
-            var chats = user.Chats;
 
+            var user = await userManager.FindByEmailAsync(Context.UserIdentifier);
+            user.Chats.AddRange(db.Chats.Where(c => c.Type == Models.ChatTypes.Single).Where(c => !c.Users.Contains(user)).ToList());
+            var chats = mapper.Map<List<Models.Chat>, List<ChatViewModel>>(user.Chats
+                .Where(c => c.ChatUsers.Where(c => c.UserID == user.Id).First().Role != Models.ChatRoles.Owner).ToList());
+            var tasks = mapper.Map<List<Models.Task>, List<TaskViewModel>>(user.Tasks);
             foreach (var chat in chats)
             {
                 if (chat.Type == Models.ChatTypes.Group)
@@ -54,65 +57,43 @@ namespace Server.Hubs
                 }
             }
 
-            await Clients.Caller.SendAsync("Connected", 
-                $"Соединение с сервером установлено",
-                db.Users.Select(u => mapper.Map<Models.User, UserViewModel>(u)).ToList());
+            await Clients.Caller.SendAsync("Connected",
+                tasks,
+                chats);
+
+            if (Context.User.IsInRole(Models.UserRoles.Administration))
+                await Clients.Caller.SendAsync("AdminPrivileges");
         }
 
-        public async void SendToChat(string groupname, string message)
+        public async Task SendMessage(Guid chatID, string message)
         {
-            await Clients.Group(groupname).SendAsync("ReceiveFromChat", message);
+            var chat = db.Chats.Find(chatID);
+            var receiver = chat.Users.FirstOrDefault().Email;
+            var user = await userManager.FindByEmailAsync(Context.UserIdentifier);
+            if (chat.Type == Models.ChatTypes.Single)
+                await Clients.Users(receiver, user.Email).SendAsync("Receive", user.Email, message);
+
+            if (chat.Type == Models.ChatTypes.Group)
+            {
+                await Clients.Group(chat.Name).SendAsync("Receive", user.Email, message);
+            }
+
+            db.Messages.Add(new Models.Message
+            {
+                ChatID = chat.Id,
+                MessageText = message,
+                SenderID = user.Id
+            });
+
+            await db.SaveChangesAsync();
         }
 
-        private static async void SaveFile(List<Models.Document> documents)
+        private static async Task SaveFile(List<Models.Document> documents)
         {
             foreach (var document in documents)
                 if (!File.Exists(document.SavePath))
                     using (FileStream stream = new(appEnv.ContentRootPath + document.SavePath, FileMode.Create))
                         await stream.WriteAsync(document.Content);
-        }
-
-        public async Task SendToUsers(Models.Message message, List<string> users)
-        {
-            //if (message.Task != null)
-            //    SaveFile(message.Task.Documents);
-
-            foreach (var user in users)
-            {
-                await Clients.Users(user, Context.UserIdentifier).SendAsync("Receive", Context.User.Identity.Name, message.MessageText);
-            }
-
-            users.Clear();
-        }
-
-        public async Task SendToEveryone(Models.Message message)
-        {
-            DbContextOptionsBuilder<ServerContext> optionsBuilder = new();
-            var options = optionsBuilder
-                .UseSqlServer(configuration.GetConnectionString("ServerContext"))
-                .Options;
-
-            using (ServerContext db = new(options))
-            {
-                var user = await userManager.FindByEmailAsync(Context.UserIdentifier);
-
-                //if (message.Task != null)
-                //{
-                //    //message.Task.UserId = user.Id;
-
-                //    foreach (var document in message.Task.Documents)
-                //        document.SavePath = "/Resources/Files/" + document.Hash + document.Extension;
-
-                //    SaveFile(message.Task.Documents);
-                //}
-
-                message.SenderID = user.Id;
-
-                await db.Messages.AddAsync(message);
-                await db.SaveChangesAsync();
-
-                await Clients.All.SendAsync("Receive", Context.User.Identity.Name, message.MessageText);
-            }
         }
 
         [Authorize(Roles = "Administration")]

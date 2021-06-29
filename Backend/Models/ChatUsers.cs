@@ -5,6 +5,14 @@ using System.Threading.Tasks;
 
 namespace Server.Models
 {
+    public enum ChatRoles
+    {
+        User,
+        Moderator,
+        Admin,
+        Owner
+    }
+
     public class ChatUsers
     {
         public Guid ChatID { get; set; }
@@ -12,5 +20,7 @@ namespace Server.Models
 
         public string UserID { get; set; }
         public virtual User User { get; set; }
+
+        public ChatRoles Role { get; set; }
     }
 }

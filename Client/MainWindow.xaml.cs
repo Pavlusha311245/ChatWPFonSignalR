@@ -4,12 +4,12 @@ using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
 using Server.Models;
 using System;
-using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Media;
 
 namespace Client
 {
@@ -28,13 +28,18 @@ namespace Client
         UserContext db;
         User user;
         string accessToken = string.Empty;
+        string openModal = string.Empty;
         private readonly PaletteHelper paletteHelper = new PaletteHelper();
 
         public MainWindow()
         {
             Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
             InitializeComponent();
+            CheckAuth();
+        }
 
+        private void CheckAuth()
+        {
             using (db = new UserContext(string.Empty))
             {
                 user = db.Users.FirstOrDefault();
@@ -42,15 +47,14 @@ namespace Client
                 if (user == null)
                     this.accessToken = AuthorizationForm();
 
-                accessToken = db.Tokens.FirstOrDefault(token => token.UserId == user.Id).ExpireDate < DateTime.Now ? null : db.Tokens.FirstOrDefault(token => token.UserId == user.Id).Value;
-
-                if (accessToken == null)
+                if (db.Tokens.FirstOrDefault() == null)
                     this.accessToken = AuthorizationForm();
 
-                viewModel = new ChatViewModel(db.Tokens.FirstOrDefault(token => token.UserId == user.Id).Value);
-            }
+                if (string.IsNullOrEmpty(accessToken))
+                    accessToken = db.Tokens.FirstOrDefault().ExpireDate < DateTime.Now ? AuthorizationForm() : db.Tokens.FirstOrDefault().Value;
 
-            //viewModel = new("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9lbWFpbGFkZHJlc3MiOiJ6YXZhZHNraXkucGF2ZWwyMDAyKzNAb3V0bG9vay5jb20iLCJodHRwOi8vc2NoZW1hcy54bWxzb2FwLm9yZy93cy8yMDA1LzA1L2lkZW50aXR5L2NsYWltcy9uYW1lIjoiemF2YWRza2l5LnBhdmVsMjAwMiszQG91dGxvb2suY29tIiwianRpIjoiZWM3ZmVkZmMtMDEyNS00MDA1LWJjY2ItNGVmYjA2OTQwYmY2IiwiaHR0cDovL3NjaGVtYXMubWljcm9zb2Z0LmNvbS93cy8yMDA4LzA2L2lkZW50aXR5L2NsYWltcy9yb2xlIjoiVXNlciIsIm5iZiI6MTYyMzk5NTI3MSwiZXhwIjoxNjI0NjAwMDcxLCJpc3MiOiJodHRwczovL2dna3R0ZC5ieSIsImF1ZCI6Imh0dHBzOi8vZ2drdHRkLmJ5In0.-JcwOLXxcbP9YD0ao2NwFXqTThfoWJ_qOfDCmpdsjK8");
+                viewModel = new ChatViewModel(accessToken);
+            }
 
             viewModel.MessageTask = new Message();
             viewModel.User = user;
@@ -103,12 +107,27 @@ namespace Client
 
                 task.DeadLine = DateTime.Now;
                 task.Remark = "";
-
                 viewModel.MessageTask.Task = task;
+
+                RoutedEventHandler evt = (sender, e) =>
+                {
+                    DialogHost.Close("newTask");
+                    openModal = string.Empty;
+                };
+                var grid = GenerateGridModalWindows("Новая задача", evt, 500, 300, 2, 2);
+
+                openModal = "newTask";
+                DialogHost.Show(grid, "newTask");
             }
         }
 
-        private Grid GenerateGrid(int width, int height, int columnsCount = 1, int rowsCount = 1)
+        private Grid GenerateGridModalWindows(
+            string title,
+            RoutedEventHandler evt,
+            int width,
+            int height,
+            int columnsCount = 1,
+            int rowsCount = 1)
         {
             Grid grid = new();
             grid.Width = width;
@@ -117,6 +136,53 @@ namespace Client
                 grid.ColumnDefinitions.Add(new ColumnDefinition());
             for (int i = 0; i < rowsCount; i++)
                 grid.RowDefinitions.Add(new RowDefinition());
+
+            PackIcon closeIcon = new();
+            closeIcon.Kind = PackIconKind.Close;
+
+            var titleBlock = new TextBlock()
+            {
+                Text = title,
+                VerticalAlignment = VerticalAlignment.Center,
+                Padding = new Thickness(10, 0, 0, 0),
+                FontSize = 16,
+                FontWeight = FontWeights.Bold
+            };
+
+            Button closeBtn = new()
+            {
+                Width = 25,
+                Height = 25,
+                Padding = new Thickness(0, 0, 0, 0),
+                Content = closeIcon,
+                HorizontalAlignment = HorizontalAlignment.Center,
+                VerticalAlignment = VerticalAlignment.Center,
+            };
+
+            closeBtn.MouseMove += new System.Windows.Input.MouseEventHandler((sender, e) =>
+            {
+                ((Button)sender).Width = 30;
+                ((Button)sender).Height = 30;
+            });
+
+            closeBtn.MouseLeave += new System.Windows.Input.MouseEventHandler((sender, e) =>
+            {
+                ((Button)sender).Width = 25;
+                ((Button)sender).Height = 25;
+            });
+
+            closeBtn.Click += evt;
+
+            grid.RowDefinitions[0].Height = new GridLength(40, GridUnitType.Pixel);
+            grid.ColumnDefinitions[grid.ColumnDefinitions.Count - 1].Width = new GridLength(40, GridUnitType.Pixel);
+
+            grid.Children.Add(closeBtn);
+            grid.Children.Add(titleBlock);
+
+            closeBtn.SetValue(Grid.ColumnProperty, grid.ColumnDefinitions.Count - 1);
+            closeBtn.SetValue(Grid.RowProperty, 0);
+            titleBlock.SetValue(Grid.ColumnProperty, 0);
+            titleBlock.SetValue(Grid.RowProperty, 0);
 
             return grid;
         }
@@ -137,27 +203,12 @@ namespace Client
 
         private void OpenSettings(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            var grid = GenerateGrid(400, 200, 2, 2);
-
-            grid.RowDefinitions[0].Height = new GridLength(40, GridUnitType.Pixel);
-            grid.RowDefinitions[1].Height = GridLength.Auto;
-            grid.ColumnDefinitions[0].Width = new GridLength(360, GridUnitType.Pixel);
-            grid.ColumnDefinitions[1].Width = new GridLength(40, GridUnitType.Pixel);
-
-            PackIcon closeIcon = new();
-            closeIcon.Kind = PackIconKind.Close;
-
-            Button closeBtn = new()
+            RoutedEventHandler evt = (sender, e) =>
             {
-                Width = 30,
-                Height = 30,
-                Padding = new Thickness(0, 0, 0, 0),
-                Content = closeIcon,
-                HorizontalAlignment = HorizontalAlignment.Center,
-                VerticalAlignment = VerticalAlignment.Center,
+                DialogHost.Close("settings");
+                openModal = string.Empty;
             };
-
-            var title = GenerateModalWindowTitle("Настройки");
+            var grid = GenerateGridModalWindows("Настройки", evt, 400, 200, 2, 2);
 
             Grid buttonsGrid = new();
             buttonsGrid.ColumnDefinitions.Add(new ColumnDefinition());
@@ -175,16 +226,9 @@ namespace Client
             //    paletteHelper.SetTheme(theme);
             //});
 
-            closeBtn.Click += new RoutedEventHandler(CloseModal);
 
-            grid.Children.Add(closeBtn);
             grid.Children.Add(buttonsGrid);
-            grid.Children.Add(title);
 
-            closeBtn.SetValue(Grid.ColumnProperty, 1);
-            closeBtn.SetValue(Grid.ColumnProperty, 1);
-            title.SetValue(Grid.ColumnProperty, 0);
-            title.SetValue(Grid.RowProperty, 0);
             buttonsGrid.SetValue(Grid.ColumnProperty, 0);
             buttonsGrid.SetValue(Grid.RowProperty, 1);
 
@@ -192,23 +236,18 @@ namespace Client
             //toggleButton.SetValue(Grid.ColumnProperty, 0);
             //toggleButton.SetValue(Grid.RowProperty, 0);
 
+            if (!string.IsNullOrEmpty(openModal))
+                CloseModal(openModal);
+
+            openModal = "settings";
             DialogHost.Show(grid, "settings");
         }
 
-        private void CloseModal(object sender, RoutedEventArgs e)
-        {
-            DialogHost.Close("settings");
-        }
+        private void CloseModal(string identify) => DialogHost.Close(identify);
 
         private void ChatsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            var selectedUsers = ChatsList.SelectedItems;
-            foreach (var selectedUser in selectedUsers)
-            {
-                viewModel.Receivers.Add(((User)selectedUser).Email);
-            }
-
-            DataContext = viewModel;
+            viewModel.ReceivingChat = (Chat)ChatsList.SelectedItem;
 
             if (SenderRow.Visibility == Visibility.Hidden)
             {
@@ -225,7 +264,52 @@ namespace Client
 
         private void Logout(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            var grid = GenerateGrid(200, 100, 2, 2);
+            RoutedEventHandler evt = (sender, e) =>
+            {
+                DialogHost.Close("exit");
+                openModal = string.Empty;
+            };
+            var grid = GenerateGridModalWindows("Выйти из аккаунта?", evt, 300, 100, 2, 2);
+
+            Button exitAccountBtn = new();
+            exitAccountBtn.VerticalAlignment = VerticalAlignment.Center;
+            exitAccountBtn.HorizontalAlignment = HorizontalAlignment.Center;
+            exitAccountBtn.Width = 100;
+            exitAccountBtn.Height = 30;
+            exitAccountBtn.Content = "Выйти";
+            exitAccountBtn.Background = Brushes.DarkRed;
+            exitAccountBtn.MouseMove += new System.Windows.Input.MouseEventHandler((sender, e) =>
+            {
+                ((Button)sender).Background = Brushes.Red;
+            });
+            exitAccountBtn.MouseLeave += new System.Windows.Input.MouseEventHandler((sender, e) =>
+            {
+                ((Button)sender).Background = Brushes.DarkRed;
+            });
+            exitAccountBtn.Click += (sender, e) =>
+            {
+                DialogHost.Close("exit");
+                openModal = string.Empty;
+                using (db = new UserContext(string.Empty))
+                {
+                    db.Tokens.Remove(db.Tokens.FirstOrDefault());
+                    db.SaveChanges();
+                    DataContext = null;
+                    CheckAuth();
+                }
+            };
+
+            grid.Children.Add(exitAccountBtn);
+
+            exitAccountBtn.SetValue(Grid.ColumnProperty, 0);
+            exitAccountBtn.SetValue(Grid.RowProperty, 1);
+            exitAccountBtn.SetValue(Grid.ColumnSpanProperty, 2);
+
+            if (!string.IsNullOrEmpty(openModal))
+                CloseModal(openModal);
+
+            openModal = "exit";
+            DialogHost.Show(grid, "exit");
         }
     }
 }

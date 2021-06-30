@@ -9,6 +9,5 @@ namespace Client.Models
         public string Remark { get; set;}
         public DateTime DeadLine { get; set; }
         public bool Done { get; set; }
-        public List<Document> Documents { get; set; } = new();
     }
 }

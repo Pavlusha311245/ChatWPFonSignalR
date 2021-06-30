@@ -7,6 +7,8 @@ namespace Server.Data
     public class ServerContext : IdentityDbContext<User>
     {
         public DbSet<Task> Tasks { get; set; }
+
+        public DbSet<Document> Documents { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<UserProfile> UserProfiles { get; set; }
         public DbSet<Chat> Chats { get; set; }

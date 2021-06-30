@@ -8,6 +8,7 @@ namespace Server.Models
     {
         public Guid Id { get; set; }
         public string SavePath { get; set; }
+        public string FileName { get; set; }
         public string Extension { get; set; }
         public string Hash { get; set; }
         public byte[] Content { get; set; }

@@ -11,134 +11,142 @@
         TextElement.Foreground="{DynamicResource MaterialDesignBody}"
         WindowState="Maximized"
         BorderThickness="0,0,0,0" Height="500" MinWidth="800" Margin="0,0,0,0" MinHeight="500">
-    <Grid Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
-        <!--Main grid-->
-        <Grid.RowDefinitions>
-            <RowDefinition Height="65"/>
-            <RowDefinition />
-            <RowDefinition Height="60"/>
-        </Grid.RowDefinitions>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="50"/>
-            <ColumnDefinition MaxWidth="250" Width="*"/>
-            <ColumnDefinition/>
-        </Grid.ColumnDefinitions>
-
-        <!--Modals-->
-        <materialDesign:DialogHost Identifier="settings" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Grid.RowSpan="3"/>
-        <materialDesign:DialogHost Identifier="exit" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Grid.RowSpan="3"/>
-        <materialDesign:DialogHost Identifier="profile" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Grid.RowSpan="3"/>
-        <materialDesign:DialogHost Identifier="newTask" HorizontalAlignment="Center" VerticalAlignment="Center" Grid.Column="1" Grid.Row="0" Grid.ColumnSpan="2" Grid.RowSpan="3"/>
-
-        <!--Start message before select chat-->
-        <Grid Grid.Column="2" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="UserChoisPrompt">
-            <Rectangle Fill="LightBlue" RadiusX="7" RadiusY="7"/>
-            <TextBlock Text="Выберите, кому хотите написать" Padding="10,5,10,5"/>
-        </Grid>
-
-        <!--Messages list-->
-        <ListView x:Name="MessagesView" Grid.Column="2" ItemsSource="{Binding Messages}" Style="{StaticResource MaterialDesignListView}" Grid.Row="1" d:LayoutOverrides="VerticalAlignment" Grid.ColumnSpan="1" Margin="0,0,0,0">
-            <ListView.ItemTemplate>
-                <DataTemplate>
-                    <Grid x:Name="MessageDataGrid">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="40"/>
-                            <ColumnDefinition/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition/>
-                        </Grid.RowDefinitions>
-
-                        <Image Source="logo.jpg" Width="30" Height="30" Grid.Column="0" Grid.ColumnSpan="1">
-                            <Image.Clip>
-                                <EllipseGeometry RadiusX="15" RadiusY="15" Center="15,15"/>
-                            </Image.Clip>
-                        </Image>
-
-                        <Grid x:Name="UserCardDataGrid" Grid.Column="1" Margin="5,5,5,5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="0" Text="{Binding Message}" VerticalAlignment="Center"/>
-                        </Grid>
+    <Window.Resources>
+        <ControlTemplate TargetType="ListBox" x:Name="DocListContentControl" x:Key="docList">
+            <ListBox>
+                <Grid>
+                    <Grid>
+                        <materialDesign:PackIcon Kind="Paperclip" Width="20" Height="20" HorizontalAlignment="Stretch" VerticalAlignment="Stretch"/>
+                        <Ellipse Width="25" Height="25" Fill="AliceBlue" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                     </Grid>
-                </DataTemplate>
-            </ListView.ItemTemplate>
-        </ListView>
-
-        <!--Chat list-->
-        <ListBox x:Name="ChatsList" Grid.RowSpan="3" Style="{StaticResource MaterialDesignListBox}" MaxWidth="250" ItemsSource="{Binding Chats}" Grid.Column="1" SelectionChanged="ChatsList_SelectionChanged" Background="#FFEBEBEB" BorderThickness="0,0,1,0" BorderBrush="Silver">
-            <ListBox.ItemTemplate>
-                <DataTemplate>
-                    <Grid x:Name="UserCardGrid">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="50"/>
-                            <ColumnDefinition Width="150"/>
-                        </Grid.ColumnDefinitions>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="50"/>
-                        </Grid.RowDefinitions>
-
-                        <Image Source="{Binding Image}" Width="50" Height="50" Grid.Column="0" Grid.ColumnSpan="1">
-                            <Image.Clip>
-                                <EllipseGeometry RadiusX="25" RadiusY="25" Center="25,25"/>
-                            </Image.Clip>
-                        </Image>
-
-                        <Grid x:Name="ChatCardDataGrid" Grid.Column="1" Margin="5,5,5,5">
-                            <Grid.ColumnDefinitions>
-                                <ColumnDefinition/>
-                            </Grid.ColumnDefinitions>
-                            <Grid.RowDefinitions>
-                                <RowDefinition/>
-                                <RowDefinition/>
-                            </Grid.RowDefinitions>
-
-                            <TextBlock Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="0" Text="{Binding Name}" VerticalAlignment="Center"/>
-                            <TextBlock Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="1" Text="{Binding Type}" FontSize="9" VerticalAlignment="Bottom"/>
-                        </Grid>
-                    </Grid>
-                </DataTemplate>
-            </ListBox.ItemTemplate>
-        </ListBox>
-
-        <!--Sender row-->
-        <Grid x:Name="SenderRow" Grid.Row="2" Grid.Column="2" Visibility="Visible">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="65"/>
-                <ColumnDefinition/>
-                <ColumnDefinition Width="65"/>
-            </Grid.ColumnDefinitions>
+                    <TextBlock Text="{Binding Path=FileName}"></TextBlock>
+                </Grid>
+            </ListBox>
+        </ControlTemplate>
+    </Window.Resources>
+    <materialDesign:DialogHost Name="ModalWindow" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" CloseOnClickAway="True">
+        <Grid Margin="0,0,0,0" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">
+            <!--Main grid-->
             <Grid.RowDefinitions>
-                <RowDefinition/>
+                <RowDefinition Height="65"/>
+                <RowDefinition />
+                <RowDefinition Height="60"/>
             </Grid.RowDefinitions>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="50"/>
+                <ColumnDefinition MaxWidth="250" Width="*"/>
+                <ColumnDefinition/>
+            </Grid.ColumnDefinitions>
+            
+            <!--Start message before select chat-->
+            <Grid Grid.Column="2" Grid.Row="1" VerticalAlignment="Center" HorizontalAlignment="Center" x:Name="UserChoisPrompt">
+                <Rectangle Fill="LightBlue" RadiusX="7" RadiusY="7"/>
+                <TextBlock Text="Выберите, кому хотите написать" Padding="10,5,10,5"/>
+            </Grid>
 
-            <Rectangle Grid.ColumnSpan="3" Margin="5,5,5,5" Stroke="#FFB3B3B3" Height="Auto" Width="Auto" Fill="#FFE7E7E7" RadiusX="10" RadiusY="10"/>
+            <!--Messages list-->
+            <ListView x:Name="MessagesView" Grid.Column="2" ItemsSource="{Binding Messages}" Style="{StaticResource MaterialDesignListView}" Grid.Row="1" d:LayoutOverrides="VerticalAlignment" Grid.ColumnSpan="1" Margin="0,0,0,0">
+                <ListView.ItemTemplate>
+                    <DataTemplate>
+                        <Grid x:Name="MessageDataGrid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="40"/>
+                                <ColumnDefinition/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition/>
+                            </Grid.RowDefinitions>
 
-            <TextBox x:Name="MessageTextBox" Text="{Binding MessageTask.MessageText}" TextWrapping="Wrap" Margin="0,15,0,15" Grid.Column="1" Padding="0,0,0,2" FontSize="14" VerticalContentAlignment="Bottom"/>
+                            <Image Source="logo.jpg" Width="30" Height="30" Grid.Column="0" Grid.ColumnSpan="1">
+                                <Image.Clip>
+                                    <EllipseGeometry RadiusX="15" RadiusY="15" Center="15,15"/>
+                                </Image.Clip>
+                            </Image>
 
-            <!--add visibility Visibility="{Binding IsAdmin}" -->
-            <Button x:Name="AddFile"  Click="ChooseFile" Opacity="1" Cursor="Hand" IsDefault="True" Padding="0,0,0,0" Margin="0,0,0,13" HorizontalContentAlignment="Center" Background="{x:Null}" Foreground="#FF673AB7" BorderThickness="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Bottom">
-                <materialDesign:PackIcon Kind="Paperclip" Width="30" Height="30" />
-            </Button>
+                            <Grid x:Name="UserCardDataGrid" Grid.Column="1" Margin="5,5,5,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
 
-            <Button x:Name="SendMessageBtn" Command="{Binding SendMessageCommand}" Grid.Column="2" MinHeight="20" Margin="0,0,0,13" Click="SendMessage" Padding="0,0,0,0" Foreground="#FF673AB7" Background="{x:Null}" BorderBrush="{x:Null}" BorderThickness="0,1,0,0" HorizontalAlignment="Center" VerticalAlignment="Bottom">
-                <materialDesign:PackIcon Kind="Send" Width="30" Height="30" VerticalContentAlignment="Top" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
-            </Button>
-        </Grid>
+                                <TextBlock Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="0" Text="{Binding Message}" VerticalAlignment="Center"/>
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </ListView.ItemTemplate>
+            </ListView>
 
-        <!--Task list-->
-        <ListBox Grid.Row="0" Grid.Column="2" Padding="10,10,10,10" Background="{x:Null}" BorderBrush="#FFDFDFDF" BorderThickness="0,0,0,1">
-            <ListBox.ItemsPanel>
-                <ItemsPanelTemplate>
-                    <StackPanel Orientation="Horizontal"/>
-                </ItemsPanelTemplate>
-            </ListBox.ItemsPanel>
-            <!--<ListBox.ItemTemplate>
+            <!--Chat list-->
+            <ListBox x:Name="ChatsList" Grid.RowSpan="3" Style="{StaticResource MaterialDesignListBox}" MaxWidth="250" ItemsSource="{Binding Chats}" Grid.Column="1" SelectionChanged="ChatsList_SelectionChanged" Background="#FFEBEBEB" BorderThickness="0,0,1,0" BorderBrush="Silver">
+                <ListBox.ItemTemplate>
+                    <DataTemplate>
+                        <Grid x:Name="UserCardGrid">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="50"/>
+                                <ColumnDefinition Width="150"/>
+                            </Grid.ColumnDefinitions>
+                            <Grid.RowDefinitions>
+                                <RowDefinition Height="50"/>
+                            </Grid.RowDefinitions>
+
+                            <Image Source="{Binding Image}" Width="50" Height="50" Grid.Column="0" Grid.ColumnSpan="1">
+                                <Image.Clip>
+                                    <EllipseGeometry RadiusX="25" RadiusY="25" Center="25,25"/>
+                                </Image.Clip>
+                            </Image>
+
+                            <Grid x:Name="ChatCardDataGrid" Grid.Column="1" Margin="5,5,5,5">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition/>
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition/>
+                                    <RowDefinition/>
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="0" Text="{Binding Name}" VerticalAlignment="Center"/>
+                                <TextBlock Grid.Column="0" Grid.ColumnSpan="1" Grid.Row="1" Text="{Binding Type}" FontSize="9" VerticalAlignment="Bottom"/>
+                            </Grid>
+                        </Grid>
+                    </DataTemplate>
+                </ListBox.ItemTemplate>
+            </ListBox>
+
+            <!--Sender row-->
+            <Grid x:Name="SenderRow" Grid.Row="2" Grid.Column="2" Visibility="Hidden">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="65"/>
+                    <ColumnDefinition/>
+                    <ColumnDefinition Width="65"/>
+                </Grid.ColumnDefinitions>
+                <Grid.RowDefinitions>
+                    <RowDefinition/>
+                </Grid.RowDefinitions>
+
+                <Rectangle Grid.ColumnSpan="3" Margin="5,5,5,5" Stroke="#FFB3B3B3" Height="Auto" Width="Auto" Fill="#FFE7E7E7" RadiusX="10" RadiusY="10"/>
+
+                <TextBox x:Name="MessageTextBox" Text="{Binding SenderMessage.MessageText}" TextWrapping="Wrap" Margin="0,15,0,15" Grid.Column="1" Padding="0,0,0,2" FontSize="14" VerticalContentAlignment="Bottom"/>
+
+                <!--add visibility Visibility="{Binding IsAdmin}" -->
+                <Button x:Name="AddFile"  Click="ChooseFiles" Opacity="1" Cursor="Hand" IsDefault="True" Padding="0,0,0,0" Margin="0,0,0,13" HorizontalContentAlignment="Center" Background="{x:Null}" Foreground="#FF673AB7" BorderThickness="0,0,0,0" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                    <materialDesign:PackIcon Kind="Paperclip" Width="30" Height="30" />
+                </Button>
+
+                <Button x:Name="SendMessageBtn" Command="{Binding SendMessageCommand}" Grid.Column="2" MinHeight="20" Margin="0,0,0,13" Click="SendMessage" Padding="0,0,0,0" Foreground="#FF673AB7" Background="{x:Null}" BorderBrush="{x:Null}" BorderThickness="0,1,0,0" HorizontalAlignment="Center" VerticalAlignment="Bottom">
+                    <materialDesign:PackIcon Kind="Send" Width="30" Height="30" VerticalContentAlignment="Top" VerticalAlignment="Stretch" HorizontalAlignment="Stretch" />
+                </Button>
+            </Grid>
+
+            <!--Task list-->
+            <ListBox Grid.Row="0" Grid.Column="2" Padding="10,10,10,10" Background="{x:Null}" BorderBrush="#FFDFDFDF" BorderThickness="0,0,0,1">
+                <ListBox.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <StackPanel Orientation="Horizontal"/>
+                    </ItemsPanelTemplate>
+                </ListBox.ItemsPanel>
+                <!--<ListBox.ItemTemplate>
                 <DataTemplate>
                     <Grid>
                         <Grid.ColumnDefinitions>
@@ -152,66 +160,67 @@
                     </Grid>
                 </DataTemplate>
             </ListBox.ItemTemplate>-->
-            <ListBoxItem Padding="5,0,5,0" Margin="5,5,5,5">
-                <Grid Width="140">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition Width="25"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition Height="25"/>
-                    </Grid.RowDefinitions>
+                <ListBoxItem Padding="5,0,5,0" Margin="5,5,5,5">
+                    <Grid Width="140">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="25"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Column="0" Grid.Row="0" FontSize="14" Foreground="Green" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">В работе</TextBlock>
-                    <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Center">2021-06-25</TextBlock>
-                    <Button Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Padding="0,0,0,0"  Width="25" Height="25">
-                        <materialDesign:PackIcon Kind="InformationOutline"/>
-                    </Button>
-                </Grid>
-            </ListBoxItem>
-            <ListBoxItem Padding="5,0,5,0" Margin="5,5,5,5">
-                <Grid Width="140">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition Width="25"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition Height="25"/>
-                    </Grid.RowDefinitions>
+                        <TextBlock Grid.Column="0" Grid.Row="0" FontSize="14" Foreground="Green" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">В работе</TextBlock>
+                        <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Center">2021-06-25</TextBlock>
+                        <Button Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Padding="0,0,0,0"  Width="25" Height="25">
+                            <materialDesign:PackIcon Kind="InformationOutline"/>
+                        </Button>
+                    </Grid>
+                </ListBoxItem>
+                <ListBoxItem Padding="5,0,5,0" Margin="5,5,5,5">
+                    <Grid Width="140">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="25"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Column="0" Grid.Row="0" FontSize="14" Foreground="Red" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">Просрочено</TextBlock>
-                    <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Center">2021-06-25</TextBlock>
-                    <Button Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Padding="0,0,0,0"  Width="25" Height="25">
-                        <materialDesign:PackIcon Kind="InformationOutline"/>
-                    </Button>
-                </Grid>
-            </ListBoxItem>
-            <ListBoxItem Padding="5,0,5,0" Margin="5,5,5,5">
-                <Grid Width="140">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition/>
-                        <ColumnDefinition Width="25"/>
-                    </Grid.ColumnDefinitions>
-                    <Grid.RowDefinitions>
-                        <RowDefinition/>
-                        <RowDefinition Height="25"/>
-                    </Grid.RowDefinitions>
+                        <TextBlock Grid.Column="0" Grid.Row="0" FontSize="14" Foreground="Red" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">Просрочено</TextBlock>
+                        <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Center">2021-06-25</TextBlock>
+                        <Button Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Padding="0,0,0,0"  Width="25" Height="25">
+                            <materialDesign:PackIcon Kind="InformationOutline"/>
+                        </Button>
+                    </Grid>
+                </ListBoxItem>
+                <ListBoxItem Padding="5,0,5,0" Margin="5,5,5,5">
+                    <Grid Width="140">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition/>
+                            <ColumnDefinition Width="25"/>
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition/>
+                            <RowDefinition Height="25"/>
+                        </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Column="0" Grid.Row="0" FontSize="14" Foreground="DarkSlateGray" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">Для выполнения</TextBlock>
-                    <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Center">2021-06-25</TextBlock>
-                    <Button Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Padding="0,0,0,0"  Width="25" Height="25">
-                        <materialDesign:PackIcon Kind="InformationOutline"/>
-                    </Button>
-                </Grid>
-            </ListBoxItem>
-        </ListBox>
+                        <TextBlock Grid.Column="0" Grid.Row="0" FontSize="14" Foreground="DarkSlateGray" HorizontalAlignment="Stretch" VerticalAlignment="Stretch">Для выполнения</TextBlock>
+                        <TextBlock Grid.Column="0" Grid.Row="1" HorizontalAlignment="Stretch" VerticalAlignment="Center">2021-06-25</TextBlock>
+                        <Button Grid.Column="1" Grid.Row="0" Grid.RowSpan="2" Padding="0,0,0,0"  Width="25" Height="25">
+                            <materialDesign:PackIcon Kind="InformationOutline"/>
+                        </Button>
+                    </Grid>
+                </ListBoxItem>
+            </ListBox>
 
-        <TabControl  Style="{StaticResource MaterialDesignNavigatilRailTabControl}"  materialDesign:ColorZoneAssist.Mode="PrimaryMid"  materialDesign:ShadowAssist.ShadowDepth="Depth0" Grid.RowSpan="3">
-            <TabItem Header="{materialDesign:PackIcon Kind=AccountCircleOutline, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" />
-            <TabItem Tag="settings"  Header="{materialDesign:PackIcon Kind=Settings, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" MouseLeftButtonUp="OpenSettings" />
-            <TabItem Tag="exit" Header="{materialDesign:PackIcon Kind=ExitToApp, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" MouseLeftButtonUp="Logout"/>
-        </TabControl>
-    </Grid>
+            <TabControl  Style="{StaticResource MaterialDesignNavigatilRailTabControl}"  materialDesign:ColorZoneAssist.Mode="PrimaryMid"  materialDesign:ShadowAssist.ShadowDepth="Depth0" Grid.RowSpan="3">
+                <TabItem Header="{materialDesign:PackIcon Kind=AccountCircleOutline, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" />
+                <TabItem Tag="settings"  Header="{materialDesign:PackIcon Kind=Settings, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" MouseLeftButtonUp="OpenSettings" />
+                <TabItem Tag="exit" Header="{materialDesign:PackIcon Kind=ExitToApp, Size=24}" Style="{StaticResource MaterialDesignNavigationRailTabItem}" Width="50" Height="50" Padding="0,0,0,0" MouseLeftButtonUp="Logout"/>
+            </TabControl>
+        </Grid>
+    </materialDesign:DialogHost>
 </Window>

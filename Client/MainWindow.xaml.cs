@@ -2,10 +2,13 @@
 using Client.Models;
 using MaterialDesignThemes.Wpf;
 using Microsoft.Win32;
+using Notification.Wpf;
 using Server.Models;
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Media;
 using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Controls;
@@ -56,9 +59,6 @@ namespace Client
                 viewModel = new ChatViewModel(accessToken);
             }
 
-            viewModel.MessageTask = new Message();
-            viewModel.User = user;
-
             DataContext = viewModel;
         }
 
@@ -83,7 +83,7 @@ namespace Client
                 await viewModel.Disconnect();
         }
 
-        private void ChooseFile(object sender, RoutedEventArgs e)
+        private void ChooseFiles(object sender, RoutedEventArgs e)
         {
             OpenFileDialog openFile = new();
             openFile.Filter = "Doc files (*.doc;*.docx)|*.doc;*.docx|Text files (*.txt)|*.txt";
@@ -92,38 +92,76 @@ namespace Client
             if (openFile.ShowDialog() == true)
             {
                 Task task = new();
+                List<Document> documents = new();
 
-                foreach (var fileName in openFile.FileNames)
+                foreach (var filepath in openFile.FileNames)
                 {
                     var fileContent = File.ReadAllBytes(openFile.FileName);
-                    var document = new Document
+                    documents.Add(new Document
                     {
-                        Extension = Path.GetExtension(fileName),
+                        FileName = Path.GetFileNameWithoutExtension(filepath),
+                        Extension = Path.GetExtension(filepath),
                         Content = fileContent,
                         Hash = Convert.ToBase64String(MD5.HashData(fileContent))
-                    };
-                    task.Documents.Add(document);
+                    });
                 }
 
-                task.DeadLine = DateTime.Now;
-                task.Remark = "";
-                viewModel.MessageTask.Task = task;
+                var grid = GenerateGridModalWindows("Новая задача", 500, 150 + (openFile.FileNames.Count() * 30), 2, 4);
 
-                RoutedEventHandler evt = (sender, e) =>
+                grid.RowDefinitions[^2].Height = new GridLength(40);
+                grid.RowDefinitions[^1].Height = new GridLength(40);
+
+                Button sendTaskBtn = new();
+                sendTaskBtn.HorizontalAlignment = HorizontalAlignment.Right;
+                sendTaskBtn.Margin = new Thickness(0, 0, 20, 0);
+                sendTaskBtn.Width = 100;
+                sendTaskBtn.Height = 25;
+                sendTaskBtn.Content = "Send task";
+                sendTaskBtn.Command = viewModel.SendTaskCommand;
+
+                TextBox remark = new();
+                remark.HorizontalAlignment = HorizontalAlignment.Stretch;
+                remark.VerticalAlignment = VerticalAlignment.Stretch;
+                remark.Margin = new Thickness(20, 0, 20, 0);
+                remark.Padding = new Thickness(0);
+
+                sendTaskBtn.Click += (sender, e) =>
                 {
-                    DialogHost.Close("newTask");
-                    openModal = string.Empty;
+                    NotificationManager notification = new();
+                    notification.Show("Информация", "Задание успешно создано", NotificationType.Success);
+                    SystemSounds.Exclamation.Play();
+                    task.Remark = remark.Text;
+                    DialogHost.CloseDialogCommand.Execute(null, null);
                 };
-                var grid = GenerateGridModalWindows("Новая задача", evt, 500, 300, 2, 2);
 
-                openModal = "newTask";
-                DialogHost.Show(grid, "newTask");
+                ListBox listDocs = new();
+                listDocs.ItemsSource = documents;
+
+                grid.Children.Add(listDocs);
+                grid.Children.Add(sendTaskBtn);
+                grid.Children.Add(remark);
+
+                listDocs.SetValue(Grid.ColumnProperty, 0);
+                listDocs.SetValue(Grid.ColumnSpanProperty, 2);
+                listDocs.SetValue(Grid.RowProperty, 1);
+
+                sendTaskBtn.SetValue(Grid.ColumnProperty, 0);
+                sendTaskBtn.SetValue(Grid.ColumnSpanProperty, 2);
+                sendTaskBtn.SetValue(Grid.RowProperty, grid.RowDefinitions.Count - 1);
+                remark.SetValue(Grid.ColumnProperty, 0);
+                remark.SetValue(Grid.ColumnSpanProperty, 2);
+                remark.SetValue(Grid.RowProperty, grid.RowDefinitions.Count - 2);
+
+                task.DeadLine = DateTime.Now;
+                viewModel.SenderMessage.Task = task;
+                viewModel.SenderMessage.Documents = documents;
+
+                DialogHost.Show(grid);
             }
         }
 
         private Grid GenerateGridModalWindows(
             string title,
-            RoutedEventHandler evt,
             int width,
             int height,
             int columnsCount = 1,
@@ -171,7 +209,7 @@ namespace Client
                 ((Button)sender).Height = 25;
             });
 
-            closeBtn.Click += evt;
+            closeBtn.Click += (sender, e) => DialogHost.CloseDialogCommand.Execute(null, null);
 
             grid.RowDefinitions[0].Height = new GridLength(40, GridUnitType.Pixel);
             grid.ColumnDefinitions[grid.ColumnDefinitions.Count - 1].Width = new GridLength(40, GridUnitType.Pixel);
@@ -203,12 +241,8 @@ namespace Client
 
         private void OpenSettings(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            RoutedEventHandler evt = (sender, e) =>
-            {
-                DialogHost.Close("settings");
-                openModal = string.Empty;
-            };
-            var grid = GenerateGridModalWindows("Настройки", evt, 400, 200, 2, 2);
+            ;
+            var grid = GenerateGridModalWindows("Настройки", 400, 200, 2, 2);
 
             Grid buttonsGrid = new();
             buttonsGrid.ColumnDefinitions.Add(new ColumnDefinition());
@@ -236,18 +270,12 @@ namespace Client
             //toggleButton.SetValue(Grid.ColumnProperty, 0);
             //toggleButton.SetValue(Grid.RowProperty, 0);
 
-            if (!string.IsNullOrEmpty(openModal))
-                CloseModal(openModal);
-
-            openModal = "settings";
-            DialogHost.Show(grid, "settings");
+            DialogHost.Show(grid);
         }
-
-        private void CloseModal(string identify) => DialogHost.Close(identify);
 
         private void ChatsList_SelectionChanged(object sender, System.Windows.Controls.SelectionChangedEventArgs e)
         {
-            viewModel.ReceivingChat = (Chat)ChatsList.SelectedItem;
+            viewModel.SenderMessage.ChatID = ((Chat)ChatsList.SelectedItem).Id;
 
             if (SenderRow.Visibility == Visibility.Hidden)
             {
@@ -259,17 +287,16 @@ namespace Client
 
         private void SendMessage(object sender, RoutedEventArgs e)
         {
+            if (string.IsNullOrWhiteSpace(MessageTextBox.Text) && viewModel.SenderMessage.Task == null)
+            {
+                MessageBox.Show("Строка сообщений пуста");
+            }
             MessageTextBox.Text = string.Empty;
         }
 
         private void Logout(object sender, System.Windows.Input.MouseButtonEventArgs e)
         {
-            RoutedEventHandler evt = (sender, e) =>
-            {
-                DialogHost.Close("exit");
-                openModal = string.Empty;
-            };
-            var grid = GenerateGridModalWindows("Выйти из аккаунта?", evt, 300, 100, 2, 2);
+            var grid = GenerateGridModalWindows("Выйти из аккаунта?", 300, 100, 2, 2);
 
             Button exitAccountBtn = new();
             exitAccountBtn.VerticalAlignment = VerticalAlignment.Center;
@@ -288,8 +315,7 @@ namespace Client
             });
             exitAccountBtn.Click += (sender, e) =>
             {
-                DialogHost.Close("exit");
-                openModal = string.Empty;
+                DialogHost.CloseDialogCommand.Execute(null, null);
                 using (db = new UserContext(string.Empty))
                 {
                     db.Tokens.Remove(db.Tokens.FirstOrDefault());
@@ -305,11 +331,7 @@ namespace Client
             exitAccountBtn.SetValue(Grid.RowProperty, 1);
             exitAccountBtn.SetValue(Grid.ColumnSpanProperty, 2);
 
-            if (!string.IsNullOrEmpty(openModal))
-                CloseModal(openModal);
-
-            openModal = "exit";
-            DialogHost.Show(grid, "exit");
+            DialogHost.Show(grid);
         }
     }
 }

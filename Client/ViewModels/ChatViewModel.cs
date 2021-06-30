@@ -14,14 +14,11 @@ namespace Client
     class ChatViewModel : ViewModelBase
     {
         HubConnection hubConnection;
-        string token;
         public Chat ReceivingChat { get; set; }
-        public User User { get; set; }
-
-        public Server.Models.Message MessageTask { get; set; }
+        public Server.Models.SenderMessage SenderMessage { get; set; } = new();
 
         public ObservableCollection<Chat> Chats { get; }
-        public ObservableCollection<MessageData> Messages { get; }
+        public ObservableCollection<ReceivedMessage> Messages { get; }
         public ObservableCollection<Models.Task> Tasks { get; }
 
         public NotificationManager NotificationManager { get; set; }
@@ -71,7 +68,8 @@ namespace Client
             }
         }
 
-        public SendMessageCommand SendMessageCommand { get; }
+        public RelayCommand SendMessageCommand { get; }
+        public RelayCommand SendTaskCommand { get; }
 
         /// <summary>
         /// ViewModel constructor
@@ -79,11 +77,10 @@ namespace Client
         /// <param name="accessToken"></param>
         public ChatViewModel(string accessToken)
         {
-            token = accessToken;
             hubConnection = new HubConnectionBuilder()
                 .WithUrl(AppUrlString + "/chat", options =>
                 {
-                    options.AccessTokenProvider = () => System.Threading.Tasks.Task.FromResult(token);
+                    options.AccessTokenProvider = () => System.Threading.Tasks.Task.FromResult(accessToken);
                 })
                 .ConfigureLogging(logging =>
                 {
@@ -94,7 +91,7 @@ namespace Client
                 .WithAutomaticReconnect()
                 .Build();
 
-            Messages = new ObservableCollection<MessageData>();
+            Messages = new ObservableCollection<ReceivedMessage>();
             Chats = new ObservableCollection<Chat>();
             Tasks = new ObservableCollection<Models.Task>();
 
@@ -102,7 +99,13 @@ namespace Client
             IsBusy = false;
             IsAdmin = System.Windows.Visibility.Hidden;
 
-            SendMessageCommand = new SendMessageCommand(async o => await SendToUsers(), o => IsConnected);
+            SendMessageCommand = new RelayCommand(async o =>
+            {
+                SenderMessage.Documents = null;
+                SenderMessage.Task = null;
+                await SendToUsers();
+            }, o => IsConnected);
+            SendTaskCommand = new RelayCommand(async o => await SendToUsers(), o => IsConnected);
 
             NotificationManager = new NotificationManager();
 
@@ -157,7 +160,7 @@ namespace Client
             {
                 await hubConnection.StartAsync();
 
-                MessageTask.Task = null;
+                SenderMessage.Task = null;
                 IsConnected = true;
             }
             catch (Exception ex)
@@ -188,7 +191,7 @@ namespace Client
         /// <param name="message"></param>
         private void SendDataToMessageListView(string user, string message)
         {
-            Messages.Insert(0, new MessageData
+            Messages.Insert(0, new ReceivedMessage
             {
                 Message = message,
                 User = user
@@ -204,8 +207,8 @@ namespace Client
             try
             {
                 IsBusy = true;
-                await hubConnection.InvokeAsync("SendMessage", ReceivingChat.Id, MessageTask.MessageText);
-                MessageTask.Task = null;
+                await hubConnection.InvokeAsync("SendMessage", SenderMessage);
+                SenderMessage.MessageText = string.Empty;
             }
             catch (Exception ex)
             {

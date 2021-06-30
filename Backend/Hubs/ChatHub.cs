@@ -43,7 +43,6 @@ namespace Server.Hubs
 
         public override async Task OnConnectedAsync()
         {
-
             var user = await userManager.FindByEmailAsync(Context.UserIdentifier);
             user.Chats.AddRange(db.Chats.Where(c => c.Type == Models.ChatTypes.Single).Where(c => !c.Users.Contains(user)).ToList());
             var chats = mapper.Map<List<Models.Chat>, List<ChatViewModel>>(user.Chats
@@ -65,34 +64,55 @@ namespace Server.Hubs
                 await Clients.Caller.SendAsync("AdminPrivileges");
         }
 
-        public async Task SendMessage(Guid chatID, string message)
+        public async Task SendMessage(Models.ReceivedMessage receivedMessage)
         {
-            var chat = db.Chats.Find(chatID);
-            var receiver = chat.Users.FirstOrDefault().Email;
+            var chat = db.Chats.Find(receivedMessage.ChatID);
+            var receiver = chat.Users.FirstOrDefault();
             var user = await userManager.FindByEmailAsync(Context.UserIdentifier);
+
+            if (receivedMessage.Documents != null)
+            {
+                await SaveFiles(receivedMessage.Documents);
+            }
+
+            var task = new Models.Task
+            {
+                DeadLine = receivedMessage.Task.DeadLine,
+                Done = receivedMessage.Task.Done,
+                Remark = receivedMessage.Task.Remark,
+            };
+
+            var createdTask = await db.Tasks.AddAsync(task);
+
             if (chat.Type == Models.ChatTypes.Single)
-                await Clients.Users(receiver, user.Email).SendAsync("Receive", user.Email, message);
+            {
+                createdTask.Entity.Users.Add(receiver);
+                await Clients.Users(receiver.Email, user.Email).SendAsync("Receive", user.Email, receivedMessage.MessageText);
+            }
 
             if (chat.Type == Models.ChatTypes.Group)
             {
-                await Clients.Group(chat.Name).SendAsync("Receive", user.Email, message);
-            }
+                createdTask.Entity.Users.AddRange(chat.Users);
+                await Clients.Group(chat.Name).SendAsync("Receive", user.Email, receivedMessage.MessageText);
+            }            
 
-            db.Messages.Add(new Models.Message
+            var message = db.Messages.Add(new Models.Message
             {
                 ChatID = chat.Id,
-                MessageText = message,
+                MessageText = receivedMessage.MessageText,
                 SenderID = user.Id
             });
+
+            createdTask.Entity.MessageId = message.Entity.Id;
 
             await db.SaveChangesAsync();
         }
 
-        private static async Task SaveFile(List<Models.Document> documents)
+        private static async Task SaveFiles(List<Models.Doc> documents)
         {
             foreach (var document in documents)
-                if (!File.Exists(document.SavePath))
-                    using (FileStream stream = new(appEnv.ContentRootPath + document.SavePath, FileMode.Create))
+                if (!File.Exists("/Resources/Files/" + document.Hash + document.Extension))
+                    using (FileStream stream = new(appEnv.ContentRootPath + "/Resources/Files/" + document.Hash + document.Extension, FileMode.Create))
                         await stream.WriteAsync(document.Content);
         }
 

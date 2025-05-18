@@ -2,8 +2,10 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.Extensions.Logging;
+using Microsoft.AspNetCore.SignalR;
+using Microsoft.EntityFrameworkCore;
 using Server.Data;
+using Server.Hubs;
 using Server.Models;
 using Server.ViewModel;
 using System;
@@ -21,12 +23,17 @@ namespace Server.Controllers
         public ServerContext db;
         public IMapper mapper;
         public UserManager<User> userManager;
+        public IHubContext<ChatHub> hubContext;
 
-        public UsersController(ServerContext db, IMapper mapper, UserManager<User> userManager)
+        public UsersController(ServerContext db,
+            IMapper mapper,
+            UserManager<User> userManager,
+            IHubContext<ChatHub> hubContext)
         {
             this.db = db;
             this.mapper = mapper;
             this.userManager = userManager;
+            this.hubContext = hubContext;
         }
 
         // GET: api/<UserController>
@@ -53,26 +60,7 @@ namespace Server.Controllers
         [HttpPut("{id}")]
         public void Put(int id, [FromBody] string value)
         {
-            
-        }
 
-        // DELETE api/<UserController>/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(string id)
-        {
-            try
-            {
-                await userManager.DeleteAsync(await userManager.FindByIdAsync(id));
-            }
-            catch (ArgumentNullException ex)
-            {
-                return BadRequest(new
-                {
-                    Error = "Not found " + ex.ParamName
-                });
-            }
-
-            return Ok(new { Message = "User successfully deleted" });
         }
     }
 }

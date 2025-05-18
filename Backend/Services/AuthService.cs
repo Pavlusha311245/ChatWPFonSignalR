@@ -1,8 +1,11 @@
 ﻿using AutoMapper;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.WebUtilities;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Server.Data;
 using Server.Interfaces;
 using Server.Models;
 using Server.ViewModel;
@@ -51,7 +54,7 @@ namespace Server.Services
                 return new UserManagerResponse
                 {
                     IsSuccess = false,
-                    Message = "User not found"
+                    Message = "Пользователь не найден"
                 };
 
             var result = await userManager.ConfirmEmailAsync(user, Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(token)));
@@ -60,13 +63,13 @@ namespace Server.Services
                 return new UserManagerResponse
                 {
                     IsSuccess = false,
-                    Message = "Email did not confirm",
+                    Message = "Email не подтверждён",
                     Errors = result.Errors.Select(e => e.Description)
                 };
 
             return new UserManagerResponse
             {
-                Message = "Email confirmed successfully!",
+                Message = "Email подтвержён успешно!",
                 IsSuccess = true,
             };
         }
@@ -83,21 +86,21 @@ namespace Server.Services
                 return new UserManagerResponse
                 {
                     IsSuccess = false,
-                    Message = "No user associated with email",
+                    Message = "Нету пользователя с таким Email",
                 };
 
             var token = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(await userManager.GeneratePasswordResetTokenAsync(user)));
 
             string url = $"{configuration["AppUrl"]}/ResetPassword?user={user.Id}&token={token}";
 
-            await mailService.SendEmailAsync(email, "Reset Password",
-                 "<h1>Follow the instructions to reset your password</h1>" +
-                $"<p>To reset your password <a href='{url}'>Click here</a></p>");
+            await mailService.SendEmailAsync(email, "Восстановление пароля",
+                 "<h1>Для восстановления следуйте инструкциями</h1>" +
+                $"<p>Чтобы восстановить пароль <a href='{url}'>нажмите сюда</a></p>");
 
             return new UserManagerResponse
             {
                 IsSuccess = true,
-                Message = "Reset password URL has been sent to the email successfully!"
+                Message = "Ссылка на восстановление пароля отправлена!"
             };
         }
 
@@ -117,7 +120,7 @@ namespace Server.Services
             if (user == null || result == false)
                 return new UserManagerResponse
                 {
-                    Message = "Invalid email or password",
+                    Message = "Неверный логин или пароль",
                     IsSuccess = false,
                 };
 
@@ -127,7 +130,7 @@ namespace Server.Services
             {
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimsIdentity.DefaultNameClaimType, user.UserName),
-                new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString()),
+                new Claim(JwtRegisteredClaimNames.Jti,Guid.NewGuid().ToString())
             };
 
             foreach (var userRole in userRoles)
@@ -177,10 +180,44 @@ namespace Server.Services
             if (!result.Succeeded)
                 return new UserManagerResponse
                 {
-                    Message = "User did not create",
+                    Message = "Пользователь не создан",
                     IsSuccess = false,
                     Errors = result.Errors.Select(e => e.Description)
                 };
+
+            var profile = new UserProfile
+            {
+                Name = model.Name,
+                Surname = model.Surname,
+                Patronymic = model.Patronymic,
+                Birthday = model.Birthday,
+                UserID = user.Id
+            };
+
+            DbContextOptionsBuilder<ServerContext> optionsBuilder = new();
+            var options = optionsBuilder
+                .UseSqlServer(configuration.GetConnectionString("ServerContext"))
+                .Options;
+
+            using (var db = new ServerContext(options))
+            {
+                var chat = new Chat
+                {
+                    Name = profile.Surname + " " + profile.Name[0] + "." + profile.Surname[0] + ".",
+                    Image = model.avatarByteArray,
+                    Type = ChatTypes.Single,
+                };
+
+                db.Chats.Add(chat);
+                user.ChatUsers.Add(new ChatUsers
+                {
+                    Chat = chat,
+                    User = user,
+                    Role = ChatRoles.Owner
+                });
+                await db.UserProfiles.AddAsync(profile);
+                await db.SaveChangesAsync();
+            }
 
             if (!await roleManager.RoleExistsAsync(UserRoles.User))
                 await roleManager.CreateAsync(new IdentityRole(UserRoles.User));
@@ -198,12 +235,12 @@ namespace Server.Services
 
             string url = $"{configuration["AppUrl"]}/api/auth/confirmemail?userid={user.Id}&token={confirmEmailToken}";
 
-            await mailService.SendEmailAsync(user.Email, "Confirm your email",
-                $"<h1>Welcome to Auth Demo</h1><p>Please confirm your email by <a href='{url}'>Clicking here</a></p>");
+            await mailService.SendEmailAsync(user.Email, "Подтверждение",
+                $"<h1>Вы зарегистрировались</h1><p>Подтвердите почту <a href='{url}'>Нажмите сюда</a></p>");
 
             return new UserManagerResponse
             {
-                Message = "User created successfully!",
+                Message = "Пользователь успешно создан!",
                 IsSuccess = true,
             };
         }
@@ -220,7 +257,7 @@ namespace Server.Services
                 return new UserManagerResponse
                 {
                     IsSuccess = false,
-                    Message = "No user associated with email",
+                    Message = "Нет пользователя с таким Email",
                 };
 
             var token = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(model.Token));
@@ -229,7 +266,7 @@ namespace Server.Services
             if (result.Succeeded)
                 return new UserManagerResponse
                 {
-                    Message = "Password has been reset successfully!",
+                    Message = "Пароль успешно изменён!",
                     IsSuccess = true,
                 };
 

@@ -1,34 +1,44 @@
 ﻿using Client.Commands;
 using Client.Models;
+using Client.ViewModels;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
-using Newtonsoft.Json;
 using Notification.Wpf;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
-using System.ComponentModel;
-using System.IO;
 using System.Media;
-using System.Net;
-using System.Threading.Tasks;
-using System.Windows.Controls;
 
 namespace Client
 {
-    class ChatViewModel : INotifyPropertyChanged
+    class ChatViewModel : ViewModelBase
     {
         HubConnection hubConnection;
-        HttpWebRequest httpRequest;
+        public Chat ReceivingChat { get; set; }
+        public Server.Models.SenderMessage SenderMessage { get; set; } = new();
 
-        public Server.Models.Message MessageTask { get; set; }
-
-        public ObservableCollection<ListBoxItem> Users { get; set; }
-        public ObservableCollection<MessageData> Messages { get; }
+        public ObservableCollection<Chat> Chats { get; }
+        public ObservableCollection<ReceivedMessage> Messages { get; }
+        public ObservableCollection<Models.Task> Tasks { get; }
 
         public NotificationManager NotificationManager { get; set; }
 
         public string AppUrlString { get; set; } = @"https://localhost:44316";
+
+        System.Windows.Visibility isAdmin;
+
+        public System.Windows.Visibility IsAdmin
+        {
+            get => isAdmin;
+            set
+            {
+                if (isAdmin != value)
+                {
+                    isAdmin = value;
+                    OnPropertyChanged("IsAdmin");
+                }
+            }
+        }
 
         bool isBusy;
         public bool IsBusy
@@ -58,14 +68,19 @@ namespace Client
             }
         }
 
-        public SendMessageCommand SendMessageCommand { get; }
+        public RelayCommand SendMessageCommand { get; }
+        public RelayCommand SendTaskCommand { get; }
 
+        /// <summary>
+        /// ViewModel constructor
+        /// </summary>
+        /// <param name="accessToken"></param>
         public ChatViewModel(string accessToken)
         {
             hubConnection = new HubConnectionBuilder()
                 .WithUrl(AppUrlString + "/chat", options =>
                 {
-                    options.AccessTokenProvider = () => Task.FromResult(accessToken);
+                    options.AccessTokenProvider = () => System.Threading.Tasks.Task.FromResult(accessToken);
                 })
                 .ConfigureLogging(logging =>
                 {
@@ -76,25 +91,29 @@ namespace Client
                 .WithAutomaticReconnect()
                 .Build();
 
-            httpRequest = WebRequest.CreateHttp(AppUrlString + "/api/Users");
-            httpRequest.PreAuthenticate = true;
-            httpRequest.Headers.Add("Authorization", "Bearer " + accessToken);
-            httpRequest.ContentType = "application/json";
-
-            Messages = new ObservableCollection<MessageData>();
-            Users = new ObservableCollection<ListBoxItem>();
+            Messages = new ObservableCollection<ReceivedMessage>();
+            Chats = new ObservableCollection<Chat>();
+            Tasks = new ObservableCollection<Models.Task>();
 
             IsConnected = false;
             IsBusy = false;
+            IsAdmin = System.Windows.Visibility.Hidden;
 
-            SendMessageCommand = new SendMessageCommand(async o => await SendMessageToEveryOne(), o => IsConnected);
+            SendMessageCommand = new RelayCommand(async o =>
+            {
+                SenderMessage.Documents = null;
+                SenderMessage.Task = null;
+                await SendToUsers();
+            }, o => IsConnected);
+            SendTaskCommand = new RelayCommand(async o => await SendToUsers(), o => IsConnected);
 
             NotificationManager = new NotificationManager();
 
+            //HUB Connection commands
             hubConnection.Closed += async (error) =>
             {
                 IsConnected = false;
-                await Task.Delay(3000);
+                await System.Threading.Tasks.Task.Delay(3000);
                 await Connect();
             };
 
@@ -103,9 +122,25 @@ namespace Client
                         SendDataToMessageListView(user, message);
                     });
 
-            hubConnection.On<string>("Connected", (message) =>
+            hubConnection.On("AdminPrivileges", () =>
             {
-                NotificationManager.Show("Информация", message, NotificationType.Information);
+                IsAdmin = System.Windows.Visibility.Visible;
+            });
+
+            hubConnection.On<List<Task>, List<Chat>>("Connected", (tasks, chats) =>
+            {
+                foreach (var chat in chats)
+                    if (!Chats.Contains(chat))
+                    {
+                        Chats.Insert(0, chat);
+                    }
+
+                foreach (var task in tasks)
+                {
+                    Tasks.Insert(0, task);
+                }
+
+                NotificationManager.Show("Информация", "Соединение с сервером установлено", NotificationType.Information);
                 SystemSounds.Exclamation.Play();
                 IsBusy = true;
                 IsConnected = true;
@@ -116,7 +151,7 @@ namespace Client
         /// Executing connections to HUB
         /// </summary>
         /// <returns></returns>
-        public async Task Connect()
+        public async System.Threading.Tasks.Task Connect()
         {
             if (IsConnected)
                 return;
@@ -125,23 +160,7 @@ namespace Client
             {
                 await hubConnection.StartAsync();
 
-                var response = (HttpWebResponse)(await httpRequest.GetResponseAsync());
-                var stream = response.GetResponseStream();
-
-                string jsonString;
-                using (StreamReader streamReader = new(stream))
-                    jsonString = await streamReader.ReadToEndAsync();
-
-                var users = JsonConvert.DeserializeObject<IEnumerable<User>>(jsonString);
-
-                foreach (var user in users)
-                {
-                    ListBoxItem listBoxItem = new();
-                    listBoxItem.Content = user.Email;
-                    Users.Insert(0, listBoxItem);
-                }
-
-                MessageTask.Task = null;
+                SenderMessage.Task = null;
                 IsConnected = true;
             }
             catch (Exception ex)
@@ -154,7 +173,7 @@ namespace Client
         /// Executing disconnect to HUB
         /// </summary>
         /// <returns></returns>
-        public async Task Disconnect()
+        public async System.Threading.Tasks.Task Disconnect()
         {
             if (!IsConnected)
                 return;
@@ -172,7 +191,7 @@ namespace Client
         /// <param name="message"></param>
         private void SendDataToMessageListView(string user, string message)
         {
-            Messages.Insert(0, new MessageData
+            Messages.Insert(0, new ReceivedMessage
             {
                 Message = message,
                 User = user
@@ -183,13 +202,13 @@ namespace Client
         /// Sending asynchronous message to HUB 
         /// </summary>
         /// <returns></returns>
-        async Task SendMessageToEveryOne()
+        async System.Threading.Tasks.Task SendToUsers()
         {
             try
             {
                 IsBusy = true;
-                await hubConnection.InvokeAsync("SendToEveryone", MessageTask);
-                MessageTask.Task = null;
+                await hubConnection.InvokeAsync("SendMessage", SenderMessage);
+                SenderMessage.MessageText = string.Empty;
             }
             catch (Exception ex)
             {
@@ -199,12 +218,6 @@ namespace Client
             {
                 IsBusy = false;
             }
-        }
-
-        public event PropertyChangedEventHandler PropertyChanged;
-        public void OnPropertyChanged(string prop)
-        {
-            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(prop));
         }
     }
 }

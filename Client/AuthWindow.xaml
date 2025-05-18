@@ -4,20 +4,32 @@
         xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         mc:Ignorable="d"
-        Title="Авторизация" Height="450" Width="350"
-        xmlns:local="clr-namespace:Client" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" x:Class="Client.AuthWindow">
-    <Grid Margin="0,0,-2,0">
-        <TextBox x:Name="LoginEmailBox" HorizontalAlignment="Center" Height="30" Margin="0,197,0,0" TextWrapping="Wrap" VerticalAlignment="Top" Width="300" VerticalContentAlignment="Center" Padding="10,5,0,7"/>
-        <PasswordBox x:Name="LoginPassBox" HorizontalAlignment="Center" Height="30" Margin="0,279,0,0" VerticalAlignment="Top" Width="300" VerticalContentAlignment="Center" Padding="10,5,0,5"/>
-        <Button x:Name="LoginBtn" Content="Войти" HorizontalAlignment="Center" Height="25" Margin="0,344,0,0" VerticalAlignment="Top" Width="100" Click="Login" FontWeight="Bold"/>
-        <TextBlock x:Name="LoginLabel" Height="20" Margin="25,172,25,0" VerticalAlignment="Top" d:LayoutOverrides="Width"><Run Language="ru-ru" Text="Электронная почта"/><LineBreak/><Run Language="ru-ru"/></TextBlock>
-        <TextBlock x:Name="PasswordLabel" Height="20" Margin="25,254,25,0" VerticalAlignment="Top" d:LayoutOverrides="Width"><Run Language="ru-ru" Text="Пароль"/></TextBlock>
+        Title="Авторизация" Height="500" Width="350"
+        xmlns:local="clr-namespace:Client" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" x:Class="Client.AuthWindow" WindowStyle="SingleBorderWindow" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100"/>
+            <RowDefinition/>
+            <RowDefinition Height="100"/>
+        </Grid.RowDefinitions>
 
-        <Image x:Name="Logo" Source="/logo.jpg" Width="100" Height="100" Margin="125,34,125,0" VerticalAlignment="Top" d:LayoutOverrides="Height">
+        <Button x:Name="LoginBtn" Content="Войти" HorizontalAlignment="Left" Margin="20,0,0,0" Width="100" Click="Login" FontWeight="Bold" Grid.Row="4" VerticalAlignment="Center"/>
+
+        <Image x:Name="Logo" Source="/logo.jpg" Margin="0,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center">
             <Image.Clip>
-                <EllipseGeometry RadiusX="50" RadiusY="50" Center="50,50"/>
+                <EllipseGeometry RadiusX="80" RadiusY="80" Center="50,50"/>
             </Image.Clip>
         </Image>
+        <StackPanel x:Name="InputGroup" Grid.Row="1" Margin="0,0,0,0" VerticalAlignment="Center">
+            <StackPanel x:Name="EmailRow" Margin="20,5,20,10" VerticalAlignment="Center">
+                <TextBlock x:Name="LoginLabel" Height="20"><Run Language="ru-ru" Text="Электронная почта"/><LineBreak/><Run Language="ru-ru"/></TextBlock>
+                <TextBox x:Name="LoginEmailBox" Height="30" TextWrapping="Wrap" VerticalContentAlignment="Center" Padding="10,5,0,7"/>
+            </StackPanel>
+            <StackPanel x:Name="PasswordRow" Margin="20,20,20,10" VerticalAlignment="Center">
+                <TextBlock x:Name="PasswordLabel" Height="20"><Run Language="ru-ru" Text="Пароль"/></TextBlock>
+                <PasswordBox x:Name="LoginPassBox" Height="30" VerticalContentAlignment="Center" Padding="10,5,0,5"/>
+            </StackPanel>
+        </StackPanel>
 
     </Grid>
 </Window>

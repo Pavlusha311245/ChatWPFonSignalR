@@ -5,9 +5,10 @@ namespace Server.Models
 {
     public class User : IdentityUser
     {
-        public List<Message> Messages { get; set; } = new();
-        public List<Task> Tasks { get; set; } = new();
+        public virtual List<Task> Tasks { get; set; } = new();
+        public virtual List<Chat> Chats { get; set; } = new();
+        public virtual List<ChatUsers> ChatUsers { get; set; } = new();
 
-        public PersonalData PersonalData { get; set; }
+        public virtual UserProfile UserProfile { get; set; }
     }
 }

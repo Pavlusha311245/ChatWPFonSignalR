@@ -6,17 +6,16 @@ namespace Server.Models
 {
     public class Task
     {
-        public int Id { get; set; }
+        public Guid Id { get; set; }
         public string Remark { get; set; }
         public DateTime DeadLine { get; set; }
         public bool Done { get; set; }
-        public List<Document> Documents { get; set; } = new();
 
-        public int MessageId { get; set; }
-        public Message Message { get; set; }
+        public Guid MessageId { get; set; }
+        public virtual Message Message { get; set; }
 
-        public string UserId { get; set; }
-        public User User { get; set; }
+        public virtual List<Document> Documents { get; set; } = new();
+        public virtual List<User> Users { get; set; } = new();
 
         [Timestamp]
         public byte[] Timestamp { get; set; }

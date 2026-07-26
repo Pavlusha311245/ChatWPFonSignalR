@@ -1,0 +1,35 @@
+﻿<Window x:Name="AuthWindowForm"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+        mc:Ignorable="d"
+        Title="Авторизация" Height="500" Width="350"
+        xmlns:local="clr-namespace:Client" xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes" x:Class="Client.AuthWindow" WindowStyle="SingleBorderWindow" ResizeMode="NoResize" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="100"/>
+            <RowDefinition/>
+            <RowDefinition Height="100"/>
+        </Grid.RowDefinitions>
+
+        <Button x:Name="LoginBtn" Content="Войти" HorizontalAlignment="Left" Margin="20,0,0,0" Width="100" Click="Login" FontWeight="Bold" Grid.Row="4" VerticalAlignment="Center"/>
+
+        <Image x:Name="Logo" Source="/logo.jpg" Margin="0,0,0,0" VerticalAlignment="Center" HorizontalAlignment="Center">
+            <Image.Clip>
+                <EllipseGeometry RadiusX="80" RadiusY="80" Center="50,50"/>
+            </Image.Clip>
+        </Image>
+        <StackPanel x:Name="InputGroup" Grid.Row="1" Margin="0,0,0,0" VerticalAlignment="Center">
+            <StackPanel x:Name="EmailRow" Margin="20,5,20,10" VerticalAlignment="Center">
+                <TextBlock x:Name="LoginLabel" Height="20"><Run Language="ru-ru" Text="Электронная почта"/><LineBreak/><Run Language="ru-ru"/></TextBlock>
+                <TextBox x:Name="LoginEmailBox" Height="30" TextWrapping="Wrap" VerticalContentAlignment="Center" Padding="10,5,0,7"/>
+            </StackPanel>
+            <StackPanel x:Name="PasswordRow" Margin="20,20,20,10" VerticalAlignment="Center">
+                <TextBlock x:Name="PasswordLabel" Height="20"><Run Language="ru-ru" Text="Пароль"/></TextBlock>
+                <PasswordBox x:Name="LoginPassBox" Height="30" VerticalContentAlignment="Center" Padding="10,5,0,5"/>
+            </StackPanel>
+        </StackPanel>
+
+    </Grid>
+</Window>
